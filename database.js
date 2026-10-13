@@ -25,12 +25,21 @@ class Database {
         const raw = fs.readFileSync(DB_FILE, 'utf8');
         const parsed = JSON.parse(raw);
         console.log(`📦 Database caricato: ${Object.keys(parsed.players || {}).length} giocatori registrati.`);
+
+        // Al caricamento, resetta connected a false per evitare conteggi fantasma prima della riconnessione dei socket
+        const loadedPlayers = {};
+        if (parsed.players) {
+          for (const [pid, p] of Object.entries(parsed.players)) {
+            loadedPlayers[pid] = { ...p, connected: false };
+          }
+        }
+
         return {
           ...defaultState,
           ...parsed,
           finalRevealStep: parsed.finalRevealStep || 0,
           podiumStep: parsed.podiumStep || 0,
-          players: parsed.players || {},
+          players: loadedPlayers,
           answersCurrentQuestion: parsed.answersCurrentQuestion || {},
           answerStats: parsed.answerStats || [0, 0, 0, 0]
         };

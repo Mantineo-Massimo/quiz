@@ -154,7 +154,7 @@ socket.on('game:questionStarted', (data) => {
 
   document.getElementById('timer-display').textContent = data.timeLimit;
   document.getElementById('timer-display').classList.remove('danger');
-  document.getElementById('answers-badge').textContent = 'Risposte: 0 in attesa';
+  document.getElementById('answers-badge').textContent = `Risposte: 0 / ${data.totalPlayers || 0}`;
 
   // Nascondi spiegazione e statistiche precedenti
   document.getElementById('explanation-box').style.display = 'none';
@@ -176,9 +176,11 @@ socket.on('game:questionStarted', (data) => {
 socket.on('game:timerTick', ({ timeRemaining }) => {
   const timerDisplay = document.getElementById('timer-display');
   timerDisplay.textContent = timeRemaining;
-  if (timeRemaining <= 5) {
+  if (timeRemaining <= 5 && timeRemaining > 0) {
     timerDisplay.classList.add('danger');
     window.sounds.playTick();
+  } else if (timeRemaining === 0) {
+    timerDisplay.classList.remove('danger');
   }
 });
 
@@ -190,6 +192,13 @@ socket.on('game:answersCountUpdated', ({ answeredCount, totalPlayers }) => {
 // Answer Revealed
 socket.on('game:answerRevealed', ({ correctIndex, explanation, answerStats, leaderboard }) => {
   window.sounds.playCorrect();
+
+  // Ferma e azzera il timer visivo immediatamente
+  const timerDisplay = document.getElementById('timer-display');
+  if (timerDisplay) {
+    timerDisplay.textContent = '0';
+    timerDisplay.classList.remove('danger');
+  }
 
   // Evidenzia opzione corretta e oscura le altre
   for (let i = 0; i < 4; i++) {
@@ -212,10 +221,21 @@ socket.on('game:answerRevealed', ({ correctIndex, explanation, answerStats, lead
   expBox.style.display = 'flex';
 });
 
-// Button next action (dopo risposta va a leaderboard)
-document.getElementById('btn-next-action').addEventListener('click', () => {
-  socket.emit('admin:next');
-});
+// Button next action (prossima domanda diretta)
+const btnNextAction = document.getElementById('btn-next-action');
+if (btnNextAction) {
+  btnNextAction.addEventListener('click', () => {
+    socket.emit('admin:nextQuestion');
+  });
+}
+
+// Button mostra classifica (opzionale)
+const btnShowLeaderboard = document.getElementById('btn-show-leaderboard');
+if (btnShowLeaderboard) {
+  btnShowLeaderboard.addEventListener('click', () => {
+    socket.emit('admin:showLeaderboard');
+  });
+}
 
 // Leaderboard Render Helper
 function renderLeaderboard(leaderboard, isLastQuestion) {
@@ -223,7 +243,15 @@ function renderLeaderboard(leaderboard, isLastQuestion) {
   const listEl = document.getElementById('leaderboard-list');
   listEl.innerHTML = '';
 
-  const topPlayers = (leaderboard || []).slice(0, 8);
+  const topPlayers = (leaderboard || []).slice(0, 10);
+
+  // Se ci sono più di 5 squadre (es. fino a 10), attiva griglia a 2 colonne a tutta larghezza
+  if (topPlayers.length > 5) {
+    listEl.classList.add('grid-layout');
+  } else {
+    listEl.classList.remove('grid-layout');
+  }
+
   topPlayers.forEach(p => {
     const row = document.createElement('div');
     row.className = `leaderboard-row rank-${p.rank}`;
@@ -246,10 +274,12 @@ function renderLeaderboard(leaderboard, isLastQuestion) {
   });
 
   const btnNext = document.getElementById('btn-next-question');
-  if (isLastQuestion) {
-    btnNext.textContent = '🏆 CLASSIFICA FINALE ➡️';
-  } else {
-    btnNext.textContent = 'PROSSIMA DOMANDA ➡️';
+  if (btnNext) {
+    if (isLastQuestion) {
+      btnNext.textContent = '🏆 CLASSIFICA FINALE ➡️';
+    } else {
+      btnNext.textContent = 'PROSSIMA DOMANDA ➡️';
+    }
   }
 }
 
@@ -515,12 +545,12 @@ window.addEventListener('keydown', (e) => {
     } else if (screens.question.classList.contains('active')) {
       const expBox = document.getElementById('explanation-box');
       if (expBox.style.display !== 'none') {
-        socket.emit('admin:next');
+        socket.emit('admin:nextQuestion');
       } else {
         socket.emit('admin:revealNow');
       }
     } else if (screens.leaderboard.classList.contains('active')) {
-      socket.emit('admin:next');
+      socket.emit('admin:nextQuestion');
     } else if (screens.finalReveal && screens.finalReveal.classList.contains('active')) {
       socket.emit('admin:advanceFinale');
     } else if (screens.podium && screens.podium.classList.contains('active')) {
@@ -528,6 +558,14 @@ window.addEventListener('keydown', (e) => {
         socket.emit('admin:advanceFinale');
       } else {
         fireConfetti();
+      }
+    }
+  } else if (e.code === 'KeyC' || e.code === 'KeyL') {
+    // Tasto rapido C (Classifica) o L (Leaderboard) durante lo show
+    if (screens.question.classList.contains('active')) {
+      const expBox = document.getElementById('explanation-box');
+      if (expBox && expBox.style.display !== 'none') {
+        socket.emit('admin:showLeaderboard');
       }
     }
   }

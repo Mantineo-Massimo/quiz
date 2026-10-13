@@ -4,6 +4,7 @@ const socket = io();
 const views = {
   join: document.getElementById('view-join'),
   waiting: document.getElementById('view-waiting'),
+  countdown: document.getElementById('view-countdown'),
   question: document.getElementById('view-question'),
   answered: document.getElementById('view-answered'),
   result: document.getElementById('view-round-result'),
@@ -18,16 +19,45 @@ function showView(name) {
   });
 }
 
+// Rilevamento piattaforma iOS e supporto Fullscreen API
+const isIOS = /iPhone|iPod/.test(navigator.userAgent) || (/iPad/.test(navigator.userAgent) && !window.MSStream);
+const isStandalone = ('standalone' in window.navigator && window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+const hasNativeFullscreen = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || (document.documentElement && (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)));
+
+const iosFsModal = document.getElementById('ios-fs-modal');
+const btnCloseIosModal = document.getElementById('btn-close-ios-modal');
+
+if (btnCloseIosModal && iosFsModal) {
+  btnCloseIosModal.addEventListener('click', () => {
+    iosFsModal.style.display = 'none';
+  });
+  const backdrop = iosFsModal.querySelector('.ios-fs-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      iosFsModal.style.display = 'none';
+    });
+  }
+}
+
+function showIosFullscreenGuide() {
+  if (iosFsModal) {
+    iosFsModal.style.display = 'flex';
+  }
+}
+
 // Fullscreen Automatico & Gestione Schermo
 function requestPhoneFullscreen() {
-  const el = document.documentElement;
-  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    if (el.requestFullscreen) {
-      el.requestFullscreen().catch(() => {});
-    } else if (el.webkitRequestFullscreen) {
-      el.webkitRequestFullscreen();
-    } else if (el.msRequestFullscreen) {
-      el.msRequestFullscreen();
+  // Minimizza barra indirizzi Safari su iOS
+  window.scrollTo(0, 1);
+
+  if (hasNativeFullscreen) {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
     }
   }
 }
@@ -41,6 +71,17 @@ function exitPhoneFullscreen() {
 }
 
 function togglePhoneFullscreen() {
+  if (isStandalone) {
+    return; // Già a pieno schermo da Web App
+  }
+
+  if (isIOS && !hasNativeFullscreen) {
+    // Su iPhone Safari: scrolla per minimizzare barre e mostra guida
+    window.scrollTo(0, 1);
+    showIosFullscreenGuide();
+    return;
+  }
+
   if (document.fullscreenElement || document.webkitFullscreenElement) {
     exitPhoneFullscreen();
   } else {
@@ -51,6 +92,14 @@ function togglePhoneFullscreen() {
 // Aggancia pulsante schermo intero nell'header
 const btnPlayerFs = document.getElementById('btn-player-fs');
 if (btnPlayerFs) {
+  if (isStandalone) {
+    btnPlayerFs.textContent = '✓ Schermo Intero';
+    btnPlayerFs.style.color = '#34d399';
+    btnPlayerFs.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+  } else if (isIOS && !hasNativeFullscreen) {
+    btnPlayerFs.textContent = '📱 Schermo Intero';
+  }
+
   btnPlayerFs.addEventListener('click', (e) => {
     e.stopPropagation();
     togglePhoneFullscreen();
@@ -58,9 +107,13 @@ if (btnPlayerFs) {
 }
 
 function updateFsButtonLabel() {
-  if (btnPlayerFs) {
+  if (btnPlayerFs && !isStandalone) {
     const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    btnPlayerFs.textContent = isFs ? '✕ Riduci' : '⛶ Schermo Intero';
+    if (isIOS && !hasNativeFullscreen) {
+      btnPlayerFs.textContent = '📱 Schermo Intero';
+    } else {
+      btnPlayerFs.textContent = isFs ? '✕ Riduci' : '⛶ Schermo Intero';
+    }
   }
 }
 document.addEventListener('fullscreenchange', updateFsButtonLabel);
@@ -122,18 +175,19 @@ try {
   }
 } catch (e) {}
 
-// Funzione di Auto-riconnessione immediata della pulsantiera
-function tryAutoJoin() {
+// Funzione di Registrazione/Riconnessione robusta della pulsantiera
+function syncPlayerWithServer() {
   try {
-    const savedNick = localStorage.getItem('unime_quiz_nick');
-    if (savedNick && !isJoined) {
-      // Mostra subito la schermata di attesa/pulsantiera evitando il form di login
+    const savedNick = localStorage.getItem('unime_quiz_nick') || playerNickname;
+    const savedAvatar = localStorage.getItem('unime_quiz_avatar') || selectedAvatar;
+    if (savedNick) {
+      playerNickname = savedNick;
+      selectedAvatar = savedAvatar;
       document.getElementById('my-nick-display').textContent = `Pulsantiera: ${savedNick}`;
-      showView('waiting');
-
+      
       socket.emit('player:join', {
         nickname: savedNick,
-        avatar: selectedAvatar,
+        avatar: savedAvatar,
         playerId: myPlayerId
       });
     }
@@ -141,9 +195,85 @@ function tryAutoJoin() {
 }
 
 if (socket.connected) {
-  tryAutoJoin();
+  syncPlayerWithServer();
 }
-socket.on('connect', tryAutoJoin);
+// Ri-sincronizza sempre su ogni connessione o riconnessione socket
+socket.on('connect', syncPlayerWithServer);
+
+// Controllo visibilità pulsante Cambio Nome Squadra:
+// SI PUÒ CAMBIARE SOLO QUANDO LA PARTITA NON È INIZIATA (LOBBY) O CHI È IN SALA D'ATTESA
+function updateEditTeamVisibility(canEdit) {
+  const btn = document.getElementById('btn-edit-team');
+  if (btn) {
+    btn.style.display = canEdit ? 'inline-block' : 'none';
+  }
+}
+
+// Funzione di visualizzazione robusta della domanda corrente (usata sia su reconnect sia su broadcast)
+function renderActiveQuestion(qData, hasAnswered = false, playerAnswer = undefined) {
+  if (!qData) return;
+  isJoined = true;
+  answerSubmitted = !!hasAnswered;
+
+  updateEditTeamVisibility(false);
+
+  // Aggiorna stato LCD
+  const lcdBadge = document.getElementById('lcd-status-badge');
+  if (lcdBadge) {
+    lcdBadge.textContent = 'IN GARA';
+    lcdBadge.style.color = 'var(--accent-gold)';
+  }
+
+  // Categoria e contatore
+  const catEl = document.getElementById('player-cat-badge');
+  if (catEl) catEl.textContent = qData.category || 'UniMe';
+  const qCountEl = document.getElementById('player-q-counter');
+  if (qCountEl) qCountEl.textContent = `Q: ${(qData.questionIndex !== undefined ? qData.questionIndex + 1 : 1)}/${qData.totalQuestions || 20}`;
+
+  // Reset timer badge e barra
+  currentTotalTime = qData.timeLimit || 20;
+  const timerBadge = document.getElementById('player-timer-badge');
+  if (timerBadge) {
+    timerBadge.textContent = `⏱️ ${currentTotalTime}s`;
+    timerBadge.classList.remove('danger');
+  }
+
+  const timerFill = document.getElementById('player-timer-fill');
+  if (timerFill) {
+    timerFill.style.transition = 'none';
+    timerFill.style.width = '100%';
+    setTimeout(() => {
+      timerFill.style.transition = `width ${currentTotalTime}s linear`;
+      timerFill.style.width = '0%';
+    }, 50);
+  }
+
+  // Popola i testi delle 4 opzioni sui bottoni arcade
+  if (Array.isArray(qData.options)) {
+    for (let i = 0; i < 4; i++) {
+      const optLabel = document.getElementById(`btn-opt-${i}-text`);
+      if (optLabel) optLabel.textContent = qData.options[i] || '';
+    }
+  }
+
+  // Reset classi sui bottoni
+  const padButtons = document.querySelectorAll('.arcade-pad-btn');
+  padButtons.forEach(btn => {
+    btn.classList.remove('selected');
+    btn.style.pointerEvents = hasAnswered ? 'none' : 'auto';
+  });
+
+  if (hasAnswered) {
+    showView('answered');
+    if (playerAnswer !== undefined && playerAnswer !== null) {
+      const chosenBtn = document.querySelector(`.arcade-pad-btn[data-opt="${playerAnswer}"]`);
+      if (chosenBtn) chosenBtn.classList.add('selected');
+    }
+  } else {
+    showView('question');
+    if (navigator.vibrate) navigator.vibrate([40, 60]);
+  }
+}
 
 // Join Game
 const btnJoin = document.getElementById('btn-join');
@@ -173,7 +303,7 @@ function handleJoin() {
   socket.emit('player:join', { nickname: nick, avatar: selectedAvatar, playerId: myPlayerId });
 }
 
-// Consenti di cambiare nickname se lo desidera
+// Consenti di cambiare nickname se lo desidera (permesso solo in LOBBY o SALA D'ATTESA)
 const btnEditTeam = document.getElementById('btn-edit-team');
 if (btnEditTeam) {
   btnEditTeam.addEventListener('click', () => {
@@ -185,7 +315,7 @@ if (btnEditTeam) {
 socket.on('player:joined', (data) => {
   isJoined = true;
 
-  // Mostra display LCD della pulsantiera (senza punteggio)
+  // Mostra display LCD della pulsantiera
   const lcdDisplay = document.getElementById('lcd-display');
   if (lcdDisplay) {
     lcdDisplay.style.display = 'flex';
@@ -196,10 +326,41 @@ socket.on('player:joined', (data) => {
   document.getElementById('my-avatar-display').textContent = data.avatar;
   document.getElementById('my-nick-display').textContent = `Pulsantiera: ${data.nickname}`;
 
-  if (data.status === 'LOBBY' || data.status === 'COUNTDOWN') {
+  // Se il giocatore si è unito a partita in corso, mostragli la sala d'attesa!
+  if (data.isWaitingRoom || data.status === 'WAITING_ROOM') {
     showView('waiting');
+    updateEditTeamVisibility(true); // IN SALA D'ATTESA SI PUÒ CAMBIARE IL NOME SQUADRA
+    const nickDisplay = document.getElementById('my-nick-display');
+    const waitingSub = document.querySelector('.waiting-sub');
+    const lcdBadge = document.getElementById('lcd-status-badge');
+    if (nickDisplay) nickDisplay.textContent = 'Sala d\'Attesa! ⏳';
+    if (waitingSub) {
+      waitingSub.innerHTML = 'Partita attualmente in corso.<br><strong>Entrerai in gara non appena parte la prossima domanda!</strong> Dita pronte ⚡';
+    }
+    if (lcdBadge) {
+      lcdBadge.textContent = 'SALA D\'ATTESA';
+      lcdBadge.style.color = 'var(--accent-gold)';
+    }
+    return;
+  }
+
+  const lcdBadge = document.getElementById('lcd-status-badge');
+  if (lcdBadge) {
+    lcdBadge.textContent = 'IN GARA';
+    lcdBadge.style.color = 'var(--accent-gold)';
+  }
+
+  if (data.status === 'LOBBY') {
+    showView('waiting');
+    updateEditTeamVisibility(true); // NELLA LOBBY SI PUÒ CAMBIARE IL NOME SQUADRA
+  } else if (data.status === 'COUNTDOWN') {
+    updateEditTeamVisibility(false); // PARTITA INIZIATA: NON SI PUÒ CAMBIARE
+    showView('countdown');
   } else if (data.status === 'QUESTION') {
-    if (data.playerAnswer !== undefined) {
+    updateEditTeamVisibility(false); // PARTITA INIZIATA: NON SI PUÒ CAMBIARE
+    if (data.currentQuestion) {
+      renderActiveQuestion(data.currentQuestion, data.playerAnswer !== undefined, data.playerAnswer);
+    } else if (data.playerAnswer !== undefined) {
       answerSubmitted = true;
       showView('answered');
     } else {
@@ -207,17 +368,20 @@ socket.on('player:joined', (data) => {
       showView('question');
     }
   } else if (data.status === 'SHOW_ANSWER') {
-    // I giocatori vedono solo la risposta inviata, senza punteggi sul telefono
+    updateEditTeamVisibility(false);
     showView('answered');
   } else if (data.status === 'LEADERBOARD') {
+    updateEditTeamVisibility(false);
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
     document.querySelector('.waiting-sub').textContent = 'Classifica proiettata in sala...';
   } else if (data.status === 'FINAL_REVEAL') {
+    updateEditTeamVisibility(false);
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
     document.querySelector('.waiting-sub').textContent = 'Svelamento classifica finale in corso...';
   } else if (data.status === 'PODIUM') {
+    updateEditTeamVisibility(false);
     showView('gameOver');
   }
 });
@@ -227,28 +391,19 @@ let currentTotalTime = 20;
 let answerSubmitted = false;
 
 socket.on('game:questionStarted', (data) => {
-  if (!isJoined) return;
-  answerSubmitted = false;
-  showView('question');
-  if (navigator.vibrate) navigator.vibrate([40, 60]);
+  renderActiveQuestion(data, false);
+});
 
-  document.getElementById('player-cat-badge').textContent = data.category || 'UniMe';
-  document.getElementById('player-q-counter').textContent = `Q: ${data.questionIndex + 1}/${data.totalQuestions}`;
-
-  // Reset timer bar
-  currentTotalTime = data.timeLimit || 20;
-  const timerFill = document.getElementById('player-timer-fill');
-  timerFill.style.transition = 'none';
-  timerFill.style.width = '100%';
-  setTimeout(() => {
-    timerFill.style.transition = `width ${currentTotalTime}s linear`;
-    timerFill.style.width = '0%';
-  }, 50);
-
-  // Set option texts
-  for (let i = 0; i < 4; i++) {
-    const optLabel = document.getElementById(`btn-opt-${i}-text`);
-    if (optLabel) optLabel.textContent = data.options[i] || '';
+// Timer Tick live sullo smartphone
+socket.on('game:timerTick', ({ timeRemaining }) => {
+  const timerBadge = document.getElementById('player-timer-badge');
+  if (timerBadge) {
+    timerBadge.textContent = `⏱️ ${timeRemaining}s`;
+    if (timeRemaining <= 5 && timeRemaining > 0) {
+      timerBadge.classList.add('danger');
+    } else {
+      timerBadge.classList.remove('danger');
+    }
   }
 });
 
@@ -260,7 +415,8 @@ padButtons.forEach(btn => {
     answerSubmitted = true;
     const optIndex = parseInt(btn.getAttribute('data-opt'), 10);
     if (navigator.vibrate) navigator.vibrate([50, 50]);
-    socket.emit('player:submitAnswer', { optionIndex: optIndex });
+    // Invia sempre sia optionIndex sia playerId persistente
+    socket.emit('player:submitAnswer', { optionIndex: optIndex, playerId: myPlayerId });
     showView('answered');
   });
 });
@@ -270,11 +426,27 @@ socket.on('player:answerAck', () => {
   showView('answered');
 });
 
-// Round Result
-// Round Result: i giocatori vedono solo che la risposta è stata inviata, niente punteggi
-socket.on('player:roundResult', ({ isCorrect }) => {
+// Round Result: i giocatori vedono solo che la risposta è stata registrata o se il tempo è scaduto
+socket.on('player:roundResult', ({ isCorrect, selectedOption }) => {
   if (!isJoined) return;
   showView('answered');
+
+  const aTitle = document.getElementById('answered-title');
+  const aSub = document.getElementById('answered-subtitle');
+  if (selectedOption !== undefined && selectedOption !== null) {
+    if (aTitle) aTitle.textContent = 'RISPOSTA REGISTRATA! ⚡';
+    if (aSub) aSub.innerHTML = 'Risposta ricevuta in tempo.<br>Guarda il maxischermo per la soluzione!';
+  } else {
+    if (aTitle) aTitle.textContent = 'TEMPO SCADUTO! ⌛';
+    if (aSub) aSub.innerHTML = 'Nessuna risposta inviata in tempo.<br>Occhio al maxischermo!';
+  }
+
+  const timerBadge = document.getElementById('player-timer-badge');
+  if (timerBadge) {
+    timerBadge.textContent = '⏱️ 0s';
+    timerBadge.classList.remove('danger');
+  }
+
   if (isCorrect) {
     window.sounds.playCorrect();
   } else {
@@ -297,12 +469,19 @@ socket.on('game:finalReveal', () => {
   document.querySelector('.waiting-sub').textContent = 'Svelamento classifica finale in corso...';
 });
 
-// Countdown state
-socket.on('game:countdown', () => {
+// Countdown state (Timer iniziale visibile a tutto schermo sullo smartphone)
+socket.on('game:countdown', ({ count }) => {
   if (!isJoined) return;
-  showView('waiting');
-  document.getElementById('my-nick-display').textContent = 'Dita sui pulsanti!';
-  document.querySelector('.waiting-sub').textContent = 'La prossima domanda sta per partire...';
+  showView('countdown');
+  const countEl = document.getElementById('phone-countdown-number');
+  if (countEl) {
+    countEl.textContent = count;
+    countEl.style.animation = 'none';
+    void countEl.offsetWidth; // trigger reflow
+    countEl.style.animation = 'giantPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+  }
+  if (window.sounds) window.sounds.playCountdown();
+  if (navigator.vibrate) navigator.vibrate(60);
 });
 
 // Podium / Game Over
@@ -313,6 +492,7 @@ socket.on('game:podium', () => {
 
 // Reset to Lobby
 socket.on('game:resetToLobby', () => {
+  updateEditTeamVisibility(true);
   if (isJoined) {
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Nuova Partita!';

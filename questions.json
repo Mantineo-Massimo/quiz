@@ -1,219 +1,342 @@
 [
   {
     "id": 1,
-    "category": "Storia di UniMe",
-    "question": "In quale anno fu fondata ufficialmente l'Università degli Studi di Messina?",
-    "timeLimit": 20,
+    "poolId": 138,
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "Appelli e Sessioni d'Esame",
+    "question": "Che cos'è la \"Sessione Straordinaria di Laurea\"?",
     "options": [
-      "1548",
-      "1861",
-      "1908",
-      "1321"
+      "Una seduta di laurea riservata agli studenti con lode",
+      "Una prova di laurea che si svolge all'estero",
+      "La sessione di laurea che si tiene normalmente tra marzo e aprile a chiusura dell'anno accademico precedente",
+      "Il test d'ingresso per la laurea magistrale"
     ],
-    "correctIndex": 0,
-    "explanation": "UniMe fu fondata nel 1548 da Sant'Ignazio di Loyola con la bolla papale 'Copiosus in misericordia Dominus' di Papa Paolo III, diventando il primo collegio gesuitico al mondo!"
+    "correctIndex": 2,
+    "correctText": "La sessione di laurea che si tiene normalmente tra marzo e aprile a chiusura dell'anno accademico precedente",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: La sessione di laurea che si tiene normalmente tra marzo e aprile a chiusura dell'anno accademico precedente"
   },
   {
     "id": 2,
-    "category": "Campus & Poli",
-    "question": "In quale polo universitario si trova la facoltà di Ingegneria e Scienze?",
-    "timeLimit": 20,
+    "poolId": 107,
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "Esami e Modalità di Verifica",
+    "question": "Se uno studente accetta un voto sufficiente durante la verbalizzazione:",
     "options": [
-      "Polo Centrale",
-      "Polo Annunziata",
-      "Polo Papardo",
-      "Polo Policlinico"
+      "Il voto può essere annullato dal Consiglio di Corso di Laurea",
+      "Può ripetere l'esame per alzare la media entro 30 giorni",
+      "Deve sostenere una prova integrativa obbligatoria",
+      "Il voto diventa definitivo, viene registrato nel libretto elettronico e non può più essere modificato"
     ],
-    "correctIndex": 2,
-    "explanation": "Il Polo Papardo ospita i dipartimenti di Ingegneria, Scienze Matematiche, Informatiche, Fisiche e della Terra, affacciato sui laghi di Ganzirri."
+    "correctIndex": 3,
+    "correctText": "Il voto diventa definitivo, viene registrato nel libretto elettronico e non può più essere modificato",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Il voto diventa definitivo, viene registrato nel libretto elettronico e non può più essere modificato"
   },
   {
     "id": 3,
-    "category": "Vita da Fuorisede",
-    "question": "Qual è il comfort food messinese d'obbligo dopo aver superato un esame tosto?",
-    "timeLimit": 20,
+    "poolId": 78,
+    "macroArea": "ERSU Messina",
+    "category": "Servizio Ristorazione e Mensa",
+    "question": "È possibile accedere alle mense ERSU per gli studenti partecipanti a programmi di mobilità internazionale (es. Erasmus in entrata)?",
     "options": [
-      "Pitone fritto tradizionale",
-      "Kebab con patatine",
-      "Cornetto vegano",
-      "Insalatina scondita"
+      "Sì, hanno diritto di accedere al servizio previa registrazione e attribuzione della fascia tariffaria o beneficio spettante",
+      "Pagando un supplemento per stranieri",
+      "Solo se accompagnati da uno studente italiano",
+      "No, possono mangiare solo al bar dell'Ateneo"
     ],
     "correctIndex": 0,
-    "explanation": "Il pitone messinese (con scarola, tuma, pomodoro e acciughe) è il rito sacro di celebrazione per ogni studente di UniMe!"
+    "correctText": "Sì, hanno diritto di accedere al servizio previa registrazione e attribuzione della fascia tariffaria o beneficio spettante",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Sì, hanno diritto di accedere al servizio previa registrazione e attribuzione della fascia tariffaria o beneficio spettante"
   },
   {
     "id": 4,
-    "category": "Miti & Stretto",
-    "question": "A quale fenomeno ottico dello Stretto di Messina si ispira il nome dell'Associazione Morgana?",
-    "timeLimit": 20,
+    "poolId": 295,
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "Storia di UniMe, Sede Centrale e Identità d'Ateneo",
+    "question": "Il sistema bibliotecario d'Ateneo comprende la celebre Biblioteca Centrale e le biblioteche di Polo che custodiscono:",
     "options": [
-      "Aurora Boreale",
-      "Fata Morgana (miraggio superiore)",
-      "Vortice di Cariddi",
-      "Faro di Capo Peloro"
+      "Un ricco patrimonio di volumi moderni, codici antichi, incunaboli e cinquecentine",
+      "Esclusivamente spartiti musicali per pianoforte",
+      "Nessun libro cartaceo, solo file MP3",
+      "Solo quotidiani dell'ultima settimana"
     ],
-    "correctIndex": 1,
-    "explanation": "La Fata Morgana è un celebre miraggio che fa apparire la costa calabrese fluttuante e vicinissima sulle acque dello Stretto di Messina!"
+    "correctIndex": 0,
+    "correctText": "Un ricco patrimonio di volumi moderni, codici antichi, incunaboli e cinquecentine",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Un ricco patrimonio di volumi moderni, codici antichi, incunaboli e cinquecentine"
   },
   {
     "id": 5,
-    "category": "UniMe & Luoghi",
-    "question": "Dove si trova la sede storica del Rettorato di UniMe?",
-    "timeLimit": 20,
+    "poolId": 260,
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "CUS Messina, Impianti Sportivi e Palestra",
+    "question": "I campi da Padel e Tennis del CUS possono essere prenotati da studenti universitari?",
     "options": [
-      "Piazza Duomo",
-      "Piazza Salvatore Pugliatti",
-      "Viale Annunziata",
-      "Piazza Cairoli"
+      "No, sono riservati solo ai docenti in pensione",
+      "Soltanto durante la notte tra domenica e lunedì",
+      "Sì, tramite la segreteria del CUS o le piattaforme/app di prenotazione dedicate a prezzi agevolati",
+      "Esclusivamente dai residenti fuori dalla Sicilia"
     ],
-    "correctIndex": 1,
-    "explanation": "Il Rettorato ha sede nel Palazzo Universitario di Piazza Salvatore Pugliatti, accanto alla Corte d'Appello e al Dipartimento di Giurisprudenza."
+    "correctIndex": 2,
+    "correctText": "Sì, tramite la segreteria del CUS o le piattaforme/app di prenotazione dedicate a prezzi agevolati",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Sì, tramite la segreteria del CUS o le piattaforme/app di prenotazione dedicate a prezzi agevolati"
   },
   {
     "id": 6,
-    "category": "Associazionismo Studentesco",
-    "question": "Chi sono le associazioni studentesche che organizzano questa serata quiz?",
-    "timeLimit": 20,
+    "poolId": 22,
+    "macroArea": "ERSU Messina",
+    "category": "Posti Letto e Servizio Abitativo",
+    "question": "Durante i periodi di chiusura estiva delle residenze:",
     "options": [
-      "Morgana e ORUM",
-      "Pegaso e Fenice",
-      "Hermes e Athena",
-      "Ulisse e Poseidon"
+      "Gli alloggi vengono destinati al pubblico esterno senza vincoli",
+      "Gli studenti possono rimanere previo pagamento di una retta giornaliera fissa senza autorizzazione",
+      "Le residenze restano aperte con gli stessi orari e servizi",
+      "Gli studenti devono obbligatoriamente liberare la stanza entro la data indicata dalle disposizioni dell'Ente"
     ],
-    "correctIndex": 0,
-    "explanation": "Associazione Morgana e ORUM uniscono le forze per la rappresentanza e la vita studentesca a UniMe!"
+    "correctIndex": 3,
+    "correctText": "Gli studenti devono obbligatoriamente liberare la stanza entro la data indicata dalle disposizioni dell'Ente",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Gli studenti devono obbligatoriamente liberare la stanza entro la data indicata dalle disposizioni dell'Ente"
   },
   {
     "id": 7,
-    "category": "Didattica & Carriera",
-    "question": "A quante ore di lavoro complessivo per lo studente corrisponde generalmente 1 CFU?",
-    "timeLimit": 20,
+    "poolId": 321,
+    "macroArea": "Associazione Morgana & O.R.U.M.",
+    "category": "Morgana: Storia & Identità",
+    "question": "Quale canale social è indicato sul sito per contattare direttamente l'Associazione Morgana?",
     "options": [
-      "10 ore",
-      "25 ore",
-      "50 ore",
-      "100 ore"
+      "@morgana_official",
+      "@associazione.morgana_",
+      "@unime_morgana",
+      "@associazione_morgana_messina"
     ],
     "correctIndex": 1,
-    "explanation": "1 Credito Formativo Universitario (CFU) corrisponde convenzionalmente a 25 ore di impegno totale (lezioni frontali + studio individuale)."
+    "correctText": "@associazione.morgana_",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: @associazione.morgana_"
   },
   {
     "id": 8,
-    "category": "Campus & Poli",
-    "question": "Dove si trova la Cittadella Sportiva Universitaria (CUS Messina) con piscina e campi?",
+    "poolId": 325,
+    "macroArea": "Associazione Morgana & O.R.U.M.",
+    "category": "Morgana: Storia & Identità",
+    "question": "Qual è il Codice Fiscale dell'Associazione O.R.U.M.?",
+    "options": [
+      "27068650833",
+      "11223344556",
+      "90012345678",
+      "97103490831"
+    ],
+    "correctIndex": 0,
+    "correctText": "27068650833",
     "timeLimit": 20,
-    "options": [
-      "Polo Annunziata",
-      "Polo Papardo",
-      "Polo Centrale",
-      "Mortelle"
-    ],
-    "correctIndex": 2,
-    "options": [
-      "Polo Papardo",
-      "Polo Annunziata",
-      "Polo Policlinico",
-      "Piazza Castronovo"
-    ],
-    "correctIndex": 1,
-    "explanation": "La grande Cittadella Sportiva Universitaria sorge all'Annunziata, dotata di piscina olimpionica, campi da tennis, calcio e palazzetti!"
+    "explanation": "Risposta corretta: 27068650833"
   },
   {
     "id": 9,
-    "category": "Trasporti a Messina",
-    "question": "Quale linea di autobus/shuttle ATM collega velocemente il centro con i Poli Papardo e Annunziata?",
-    "timeLimit": 20,
+    "poolId": 46,
+    "macroArea": "ERSU Messina",
+    "category": "Borse di Studio",
+    "question": "Per gli studenti del primo anno, il diritto a mantenere la borsa e a incassare la seconda rata/saldo è subordinato al:",
     "options": [
-      "Linea Shuttle 100",
-      "Linea 1 Express",
-      "Linea Notturna 99",
-      "Tram 4"
+      "Superamento della tesi di laurea",
+      "Raggiungimento di una media pari o superiore a 28/30",
+      "Mantenerne il possesso senza necessità di esami",
+      "Conseguimento del numero di crediti (CFU) minimi previsti dal bando entro le scadenze indicate"
     ],
-    "correctIndex": 0,
-    "explanation": "La Linea Shuttle 100 è l'arteria fondamentale dei trasporti ATM che connette i principali poli universitari da Nord a Sud."
+    "correctIndex": 3,
+    "correctText": "Conseguimento del numero di crediti (CFU) minimi previsti dal bando entro le scadenze indicate",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Conseguimento del numero di crediti (CFU) minimi previsti dal bando entro le scadenze indicate"
   },
   {
     "id": 10,
-    "category": "Campus & Poli",
-    "question": "A quale celebre medico e statistico messinese è intitolato il Policlinico Universitario?",
-    "timeLimit": 20,
+    "poolId": 358,
+    "macroArea": "Associazione Morgana & O.R.U.M.",
+    "category": "Morgana: Battaglie & Traguardi",
+    "question": "Per quale tipo di bando universitario le associazioni hanno lavorato per garantire la massima fruizione ed estensione dei benefici?",
     "options": [
-      "Gaetano Martino",
-      "Salvatore Pugliatti",
-      "Giorgio La Pira",
-      "Antonello da Messina"
+      "Bando Casa UniMe e Bando Part-Time 150 ore",
+      "Bando per l'acquisto di macchinari da laboratorio",
+      "Bando d'asta per le mense",
+      "Concorso per ricercatori a tempo determinato"
     ],
     "correctIndex": 0,
-    "explanation": "L'AOU Policlinico di Messina è intitolata a Gaetano Martino, illustre fisiologo, accademico e Ministro degli Esteri (tra i padri fondatori dei Trattati di Roma)."
+    "correctText": "Bando Casa UniMe e Bando Part-Time 150 ore",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Bando Casa UniMe e Bando Part-Time 150 ore"
   },
   {
     "id": 11,
-    "category": "Servizi agli Studenti",
-    "question": "Quale ente regionale gestisce le borse di studio, gli alloggi e le mense per gli studenti di UniMe?",
-    "timeLimit": 20,
+    "poolId": 227,
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "ATM, Trasporti e Mobilità Urbana",
+    "question": "Quale importante agevolazione per il trasporto urbano è stata attivata negli ultimi anni dall'Università di Messina in convenzione con ATM e il Comune?",
     "options": [
-      "ERSU Messina",
-      "CUS Messina",
-      "INPS Giovani",
-      "ADISU Nazionale"
+      "Biglietti gratuiti solo per i docenti di ruolo",
+      "L'uso gratuito dei voli aerei nazionali",
+      "Il servizio taxi gratuito per tutti gli studenti",
+      "L'abbonamento annuale ai trasporti urbani a prezzo simbolico/agevolato per tutti gli studenti UniMe"
     ],
-    "correctIndex": 0,
-    "explanation": "L'ERSU (Ente Regionale per il Diritto allo Studio Universitario) di Messina eroga borse di studio, posti alloggio e servizio ristorazione per gli iscritti UniMe."
+    "correctIndex": 3,
+    "correctText": "L'abbonamento annuale ai trasporti urbani a prezzo simbolico/agevolato per tutti gli studenti UniMe",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: L'abbonamento annuale ai trasporti urbani a prezzo simbolico/agevolato per tutti gli studenti UniMe"
   },
   {
     "id": 12,
-    "category": "Leggende Universitarie",
-    "question": "Secondo una celebre scaramanzia studentesca a Piazza Pugliatti, cosa NON dovresti fare prima di laurearti?",
-    "timeLimit": 20,
+    "poolId": 384,
+    "macroArea": "Associazione Morgana & O.R.U.M.",
+    "category": "Morgana: Servizi & Digitale",
+    "question": "Quale servizio permette di entrare nei gruppi di discussione e supporto informale suddivisi per corso e insegnamento?",
     "options": [
-      "Salire la scalinata centrale guardando indietro",
-      "Camminare sulle aiuole del Rettorato",
-      "Toccare il leone della fontana",
-      "Scattare una foto con la corona d'alloro prima dell'esame"
+      "Gruppi WhatsApp dei Corsi e delle Materie",
+      "Chat segreta di Dipartimento",
+      "Canale Telegram del Comune",
+      "Forum privato a pagamento"
     ],
-    "correctIndex": 3,
-    "explanation": "Indossare o farsi foto con la corona d'alloro prima della proclamazione porta notoriamente una sfortuna colossale in tutta la comunità studentesca!"
+    "correctIndex": 0,
+    "correctText": "Gruppi WhatsApp dei Corsi e delle Materie",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Gruppi WhatsApp dei Corsi e delle Materie"
   },
   {
     "id": 13,
-    "category": "Associazionismo & Eventi",
-    "question": "Qual è il principale obiettivo delle associazioni universitarie come Morgana e ORUM?",
-    "timeLimit": 20,
+    "poolId": 220,
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "Email Istituzionale, Pacchetto Office e Gemini / AI",
+    "question": "Gli avvisi e-mail di ESSE3 relativi a prenotazioni esami e verbalizzazioni arrivano su:",
     "options": [
-      "Rappresentare gli studenti negli organi di ateneo e animare la vita universitaria",
-      "Vendere dispense a caro prezzo",
-      "Interrogare i docenti a fine corso",
-      "Stabilire le date degli appelli senza i professori"
+      "L'e-mail personale indicata all'atto della nascita",
+      "La casella PEC del Comune di Messina",
+      "Esclusivamente sulla casella di posta e-mail istituzionale UniMe",
+      "La casella e-mail dei genitori"
     ],
-    "correctIndex": 0,
-    "explanation": "Morgana e ORUM tutelano i diritti degli studenti, li rappresentano in Senato, CdA e dipartimenti, organizzando al contempo eventi culturali, formativi e di aggregazione!"
+    "correctIndex": 2,
+    "correctText": "Esclusivamente sulla casella di posta e-mail istituzionale UniMe",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Esclusivamente sulla casella di posta e-mail istituzionale UniMe"
   },
   {
     "id": 14,
-    "category": "UniMe nel Mondo",
-    "question": "Qual è il nome del programma europeo di mobilità per studiare un semestre all'estero con UniMe?",
-    "timeLimit": 20,
+    "poolId": 24,
+    "macroArea": "ERSU Messina",
+    "category": "Posti Letto e Servizio Abitativo",
+    "question": "Un vincitore di posto letto che intende trasferirsi in un'altra università durante l'anno accademico:",
     "options": [
-      "Erasmus+ (Studio & Traineeship)",
-      "Interrail Pass",
-      "Marco Polo Fellowship",
-      "Grand Tour Europe"
+      "Perde il diritto al posto alloggio e deve liberare la stanza",
+      "Trasferisce il posto letto automaticamente alla nuova sede",
+      "Mantiene il posto letto presso l'ERSU Messina fino a fine anno",
+      "Può subaffittare la stanza al nuovo corso di laurea"
     ],
     "correctIndex": 0,
-    "explanation": "Con il programma Erasmus+, centinaia di studenti UniMe partono ogni anno per università partner in tutta Europa e oltre!"
+    "correctText": "Perde il diritto al posto alloggio e deve liberare la stanza",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Perde il diritto al posto alloggio e deve liberare la stanza"
   },
   {
     "id": 15,
-    "category": "Gran Finale UniMe",
-    "question": "Qual è il colore accademico tradizionalmente associato alla toga dell'Ateneo di Messina?",
-    "timeLimit": 20,
+    "poolId": 60,
+    "macroArea": "ERSU Messina",
+    "category": "Borse di Studio",
+    "question": "Qual è lo strumento di autenticazione digitale generalmente richiesto per accedere al portale e validare la domanda?",
     "options": [
-      "Blu e Oro",
-      "Fucsia e Grigio",
-      "Verde fluo e Nero",
-      "Arancione e Viola"
+      "Il codice fiscale inviato via SMS senza autenticazione forte",
+      "Una qualsiasi e-mail informale",
+      "Il numero di matricola e la password della posta elettronica personale",
+      "SPID o CIE (Carta d'Identità Elettronica)"
+    ],
+    "correctIndex": 3,
+    "correctText": "SPID o CIE (Carta d'Identità Elettronica)",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: SPID o CIE (Carta d'Identità Elettronica)"
+  },
+  {
+    "id": 16,
+    "poolId": 165,
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "CFU",
+    "question": "I crediti acquisiti durante un periodo di studio all'estero (es. Erasmus):",
+    "options": [
+      "Vengono convalidati e inseriti nella carriera dello studente previa approvazione del Learning Agreement",
+      "Sostituiscono il voto di diploma",
+      "Vengono persi al rientro in Italia",
+      "Vengono convertiti in ore di volontariato"
     ],
     "correctIndex": 0,
-    "explanation": "Il Blu d'Ateneo e l'Oro sono i colori araldici storici di UniMe e della città dello Stretto!"
+    "correctText": "Vengono convalidati e inseriti nella carriera dello studente previa approvazione del Learning Agreement",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Vengono convalidati e inseriti nella carriera dello studente previa approvazione del Learning Agreement"
+  },
+  {
+    "id": 17,
+    "poolId": 342,
+    "macroArea": "Associazione Morgana & O.R.U.M.",
+    "category": "Morgana: Eventi & Solidarietà",
+    "question": "In quale mese dell'anno si svolge tradizionalmente la raccolta de \"La Notte dei Regali\"?",
+    "options": [
+      "Dicembre",
+      "Settembre",
+      "Aprile",
+      "Agosto"
+    ],
+    "correctIndex": 0,
+    "correctText": "Dicembre",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Dicembre"
+  },
+  {
+    "id": 18,
+    "poolId": 124,
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "Esami e Modalità di Verifica",
+    "question": "Quando si definisce un esame \"integrato\"?",
+    "options": [
+      "Quando si svolge contemporaneamente in due Dipartimenti",
+      "Quando viene sostenuto in lingua straniera",
+      "Quando comprende due o più moduli disciplinari distinti che concorrono a un unico voto finale e un unico blocco di CFU",
+      "Quando richiede l'uso del computer"
+    ],
+    "correctIndex": 2,
+    "correctText": "Quando comprende due o più moduli disciplinari distinti che concorrono a un unico voto finale e un unico blocco di CFU",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Quando comprende due o più moduli disciplinari distinti che concorrono a un unico voto finale e un unico blocco di CFU"
+  },
+  {
+    "id": 19,
+    "poolId": 214,
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "Email Istituzionale, Pacchetto Office e Gemini / AI",
+    "question": "L'accesso alla rete Wi-Fi internazionale eduroam presso UniMe e altri Atenei nel mondo avviene inserendo:",
+    "options": [
+      "La password generica 12345678",
+      "Il codice ISEE dello studente",
+      "L'indirizzo e-mail istituzionale completo e la relativa password",
+      "Il numero della targa dell'automobile"
+    ],
+    "correctIndex": 2,
+    "correctText": "L'indirizzo e-mail istituzionale completo e la relativa password",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: L'indirizzo e-mail istituzionale completo e la relativa password"
+  },
+  {
+    "id": 20,
+    "poolId": 184,
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "Dipartimenti e Organizzazione Accademica",
+    "question": "Che cos'è la \"Commissione Paritetica Docenti-Studenti\" (CPDS)?",
+    "options": [
+      "Il tribunale che giudica i reati",
+      "La squadra sportiva del dipartimento",
+      "La commissione che assegna le borse Erasmus",
+      "Un organo di monitoraggio dell'offerta formativa, della qualità della didattica e del servizio fornito agli studenti"
+    ],
+    "correctIndex": 3,
+    "correctText": "Un organo di monitoraggio dell'offerta formativa, della qualità della didattica e del servizio fornito agli studenti",
+    "timeLimit": 20,
+    "explanation": "Risposta corretta: Un organo di monitoraggio dell'offerta formativa, della qualità della didattica e del servizio fornito agli studenti"
   }
 ]

@@ -1,7 +1,13 @@
 /* Mobile-first: Telecomando / Pulsantiera Mobile */
-html, body {
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
   height: 100%;
   height: 100dvh;
+  min-height: -webkit-fill-available;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -15,11 +21,12 @@ html, body {
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
+  height: -webkit-fill-available;
   max-width: 520px;
   margin: 0 auto;
   padding: 10px 14px;
-  padding-top: max(10px, env(safe-area-inset-top));
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   padding-left: max(14px, env(safe-area-inset-left));
   padding-right: max(14px, env(safe-area-inset-right));
   position: relative;
@@ -445,3 +452,182 @@ html, body {
   font-weight: 900;
   color: #fff;
 }
+
+/* TIMER PILL NELLA DOMANDA SU SMARTPHONE */
+.player-timer-pill {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 3px 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.player-timer-pill.danger {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  animation: timerPulse 0.5s infinite alternate;
+}
+
+@keyframes timerPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* SCHERMATA COUNTDOWN INIZIALE SU SMARTPHONE */
+.phone-countdown-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.phone-countdown-label {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.phone-countdown-giant {
+  font-family: var(--font-display);
+  font-size: 9rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(193, 41, 47, 0.8), 0 0 80px rgba(245, 158, 11, 0.5);
+  margin-bottom: 24px;
+  animation: giantPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.phone-countdown-sub {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #f1f5f9;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+@keyframes giantPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* MODAL GUIDA FULLSCREEN IPHONE */
+.ios-fs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.ios-fs-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ios-fs-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #111827;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px 28px 0 0;
+  padding: 20px 24px 32px 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+  animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.ios-fs-handle {
+  width: 42px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0 auto 16px auto;
+}
+
+.ios-fs-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ios-fs-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.ios-fs-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.ios-fs-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ios-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.ios-step-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--morgana-red);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.ios-step-text {
+  font-size: 0.9rem;
+  color: #f1f5f9;
+  line-height: 1.45;
+}
+
+

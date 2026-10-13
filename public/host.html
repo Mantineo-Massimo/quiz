@@ -145,9 +145,14 @@
         <div class="explanation-text">
           <strong>CURIOSITÀ UNIME:</strong> <span id="explanation-text-content"></span>
         </div>
-        <button id="btn-next-action" class="btn btn-primary" style="margin-left: auto; white-space: nowrap;">
-          Tabellone ➡️
-        </button>
+        <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+          <button id="btn-show-leaderboard" class="btn btn-glass" style="white-space: nowrap; font-size: 0.95rem; border-color: #a855f7; background: rgba(168, 85, 247, 0.25);">
+            📊 Mostra Classifica
+          </button>
+          <button id="btn-next-action" class="btn btn-primary" style="white-space: nowrap; font-size: 0.95rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            Prossima Domanda ➡️
+          </button>
+        </div>
       </div>
     </main>
 
@@ -157,7 +162,7 @@
       <div id="leaderboard-list" class="leaderboard-list">
         <!-- Righe classifica -->
       </div>
-      <div style="display: flex; justify-content: center; margin-top: 36px;">
+      <div style="display: flex; justify-content: center; margin-top: 20px; padding-bottom: 14px;">
         <button id="btn-next-question" class="btn btn-primary btn-start-giant">
           PROSSIMA DOMANDA ➡️
         </button>

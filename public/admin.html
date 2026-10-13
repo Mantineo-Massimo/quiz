@@ -61,34 +61,89 @@
 
     <!-- TAB 1: CONTROLLO GIOCO -->
     <div id="tab-control" class="admin-panel active">
-      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Comandi Partita Rapidi</h2>
-      <div class="control-btn-grid">
-        <button id="admin-btn-start" class="btn btn-primary">
-          🚀 Inizia Quiz da Zero
-        </button>
-        <button id="admin-btn-reveal" class="btn btn-glass" style="background: rgba(234, 179, 8, 0.2); border-color: #eab308;">
-          💡 Rivela Risposta Adesso
-        </button>
-        <button id="admin-btn-next" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-          ➡️ Prossimo Step (Classifica / Domanda)
-        </button>
-        <button id="admin-btn-podium" class="btn btn-glass" style="background: rgba(168, 85, 247, 0.2); border-color: #a855f7;">
-          🏆 Mostra Podio Finale
-        </button>
-        <button id="admin-btn-reset" class="btn btn-glass" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
-          🔄 Resetta alla Lobby
-        </button>
-        <button id="admin-btn-clear-all" class="btn btn-glass" style="background: rgba(153, 27, 27, 0.3); border-color: #b91c1c; color: #fca5a5;">
-          🗑️ Svuota Tutti i Giocatori
-        </button>
+      
+      <!-- 1. HUB AZIONE ATTUALE (COSA FARE ADESSO) -->
+      <div class="action-hub-card">
+        <div class="action-hub-header">
+          <span id="hub-phase-badge" class="action-hub-badge">FASE: LOBBY</span>
+          <span style="font-size: 0.85rem; color: #64748b;">• Regia Live</span>
+        </div>
+        <h2 id="hub-action-title" class="action-hub-title">🚀 Sei nella Lobby d'Attesa</h2>
+        <p id="hub-action-desc" class="action-hub-desc">
+          I partecipanti stanno inquadrando il QR Code con lo smartphone per entrare in gara. Quando sei pronto a iniziare lo show, clicca sul pulsante qui sotto:
+        </p>
+
+        <!-- Bottoni dinamici dell'Azione Attuale -->
+        <div id="hub-action-buttons" class="action-hub-btns">
+          <!-- Popolato dinamicamente da admin.js -->
+          <button id="admin-hub-start" class="btn-hub-primary">
+            🚀 AVVIA QUIZ (Inizia con Domanda 1)
+          </button>
+        </div>
       </div>
 
-      <div style="background: rgba(0,0,0,0.3); padding: 18px; border-radius: 14px; border: 1px solid var(--border-glass);">
-        <h3 style="font-size: 1.1rem; color: var(--unime-gold); margin-bottom: 6px;">💡 Suggerimento per l'evento</h3>
-        <p style="color: rgba(255,255,255,0.8); line-height: 1.4; font-size: 0.95rem;">
-          Puoi proiettare lo schermo <strong>/host</strong> sul monitor o videoproiettore della sala (premi <strong>F11</strong> per lo schermo intero) e avanzare comodamente le domande usando la <strong>Barra Spaziatrice</strong> della tastiera del PC, oppure usando questo pannello dal tuo smartphone o dal computer!
-        </p>
+      <!-- 2. GOBBO / PROMPTER DEL CONDUTTORE (Visibile durante le domande) -->
+      <div id="admin-prompter-section" class="prompter-card" style="display: none;">
+        <div class="prompter-title-row">
+          <div>
+            <span id="prompter-category-badge" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #fca5a5; letter-spacing: 1px;">CATEGORIA</span>
+            <span id="prompter-q-number" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--accent-gold); margin-left: 10px;">DOMANDA 1/15</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #64748b; font-weight: 700;">PROMPTER REGIA (Non visibile agli studenti)</span>
+        </div>
+        <div id="prompter-question-text" class="prompter-q-text">
+          Caricamento testo della domanda...
+        </div>
+        
+        <!-- Le 4 Opzioni con evidenziata la risposta corretta -->
+        <div id="prompter-options-list" class="prompter-opts-grid">
+          <!-- Popolato da JS -->
+        </div>
+
+        <div id="prompter-explanation-box" class="prompter-explanation" style="display: none;">
+          <strong>💡 Curiosità UniMe per la sala:</strong> <span id="prompter-explanation-text"></span>
+        </div>
       </div>
+
+      <!-- 3. COMANDI MANUALI RAPIDI -->
+      <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 18px; border: 1px solid var(--border-glass); margin-bottom: 24px;">
+        <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+          🎮 Comandi Manuali Rapidi
+        </h3>
+        <div class="control-btn-grid" style="margin-bottom: 0;">
+          <button id="admin-btn-next-question" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            ➡️ Prossima Domanda
+          </button>
+          <button id="admin-btn-show-leaderboard" class="btn btn-glass" style="background: rgba(139, 92, 246, 0.25); border-color: #8b5cf6;">
+            📊 Mostra Classifica Ora
+          </button>
+          <button id="admin-btn-reveal" class="btn btn-glass" style="background: rgba(234, 179, 8, 0.2); border-color: #eab308;">
+            💡 Svela Risposta Adesso
+          </button>
+          <button id="admin-btn-podium" class="btn btn-glass" style="background: rgba(245, 158, 11, 0.2); border-color: #f59e0b;">
+            🏆 Vai al Podio Finale
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. ZONA DI SICUREZZA / RESET EMERGENZA (ISOLATA IN BASSO) -->
+      <div class="danger-zone-card">
+        <div class="danger-zone-title">
+          <span>⚠️</span> ZONA EMERGENZA / RESET PARTITA
+        </div>
+        <p class="danger-zone-desc">
+          Usa questi comandi solo se devi azzerare la partita o ricominciare da capo l'evento. I partecipanti resteranno o dovranno riconnettersi.
+        </p>
+        <div class="danger-zone-btns">
+          <button id="admin-btn-reset" class="btn btn-glass" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; font-size: 0.88rem; padding: 10px 18px;">
+            🔄 Resetta Partita alla Lobby
+          </button>
+          <button id="admin-btn-clear-all" class="btn btn-glass" style="background: rgba(153, 27, 27, 0.25); border-color: #b91c1c; color: #fca5a5; font-size: 0.88rem; padding: 10px 18px;">
+            🗑️ Svuota Tutte le Squadre
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- TAB 2: GIOCATORI CONNESSI -->
@@ -99,11 +154,28 @@
       </div>
     </div>
 
-    <!-- TAB 3: MODIFICA DOMANDE -->
+    <!-- TAB 3: GESTIONE DOMANDE -->
     <div id="tab-questions" class="admin-panel">
+      <!-- Banner Archivio Domande -->
+      <div style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h3 style="color: var(--unime-gold); font-size: 1.15rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+              <span>📚</span> Archivio Ufficiale: 400 Domande (ERSU, UniMe &amp; Morgana)
+            </h3>
+            <p style="font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.4; margin: 0;">
+              Ogni partita seleziona <strong>20 domande</strong> bilanciate (5 per ciascuna delle 4 Macro-Aree). L'ordine delle 4 opzioni di risposta viene mescolato casualmente ad ogni estrazione.
+            </p>
+          </div>
+          <button id="btn-generate-weighted" class="btn btn-primary" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 10px 20px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
+            🎲 Estrai Nuove 20 Domande Ponderate
+          </button>
+        </div>
+      </div>
+
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-        <h2 style="font-size: 1.3rem;">Elenco Domande Attuali</h2>
-        <button id="btn-save-questions" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+        <h2 style="font-size: 1.3rem;">Domande della Partita Attuale (<span id="admin-q-count-display">20</span>)</h2>
+        <button id="btn-save-questions" class="btn btn-glass" style="padding: 8px 16px; font-size: 0.9rem;">
           💾 Salva Modifiche
         </button>
       </div>

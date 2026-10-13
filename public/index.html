@@ -8,6 +8,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#090e1a">
   <title>UniMe Level Up | L'interactive info show per le matricole</title>
+  <link rel="apple-touch-icon" href="/assets/Morgana.png">
+  <link rel="icon" type="image/png" href="/assets/Morgana.png">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/player.css">
   <script src="/socket.io/socket.io.js"></script>
@@ -37,7 +39,7 @@
           <div style="font-size: 0.72rem; color: #10b981; font-weight: 700;">● PULSANTIERA CONNESSA</div>
         </div>
       </div>
-      <div style="padding: 4px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem; color: var(--accent-gold); font-weight: 800; font-family: var(--font-mono);">
+      <div id="lcd-status-badge" style="padding: 4px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem; color: var(--accent-gold); font-weight: 800; font-family: var(--font-mono);">
         IN GARA
       </div>
     </div>
@@ -97,11 +99,23 @@
       </div>
     </main>
 
+    <!-- 2b. VIEW COUNTDOWN (TIMER INIZIALE SU SMARTPHONE) -->
+    <main id="view-countdown" class="player-view">
+      <div class="phone-countdown-box">
+        <div class="phone-countdown-label">⚡ DOMANDA IN ARRIVO TRA</div>
+        <div id="phone-countdown-number" class="phone-countdown-giant">3</div>
+        <div class="phone-countdown-sub">DITA SUI PULSANTI!</div>
+      </div>
+    </main>
+
     <!-- 3. VIEW QUESTION (PULSANTIERA 4 TASTI) -->
     <main id="view-question" class="player-view">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span id="player-cat-badge" style="font-weight: 800; color: #fca5a5; font-size: 0.95rem; text-transform: uppercase;">Categoria</span>
-        <span id="player-q-counter" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-gold); font-size: 0.95rem;">Q: 1/15</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="player-timer-badge" class="player-timer-pill">⏱️ 20s</span>
+          <span id="player-q-counter" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-gold); font-size: 0.95rem;">Q: 1/15</span>
+        </div>
       </div>
 
       <div class="player-timer-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 999px; margin-bottom: 14px; overflow: hidden;">
@@ -131,11 +145,11 @@
     <!-- 4. VIEW ANSWERED -->
     <main id="view-answered" class="player-view">
       <div class="answered-card">
-        <div style="font-size: 4.5rem; margin-bottom: 16px;">⚡</div>
-        <h2 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; color: #fff;">
+        <div id="answered-icon" style="font-size: 4.5rem; margin-bottom: 16px;">⚡</div>
+        <h2 id="answered-title" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; color: #fff;">
           RISPOSTA INVIATA!
         </h2>
-        <p style="color: #94a3b8; font-size: 1.15rem; max-width: 320px; line-height: 1.4;">
+        <p id="answered-subtitle" style="color: #94a3b8; font-size: 1.15rem; max-width: 320px; line-height: 1.4;">
           Segnale registrato con successo.<br>Guarda il maxischermo per seguire lo show!
         </p>
       </div>
@@ -162,6 +176,46 @@
         </p>
       </div>
     </main>
+
+    <!-- MODAL GUIDA SCHERMO INTERO IPHONE -->
+    <div id="ios-fs-modal" class="ios-fs-modal" style="display: none;">
+      <div class="ios-fs-backdrop"></div>
+      <div class="ios-fs-sheet">
+        <div class="ios-fs-handle"></div>
+        <div class="ios-fs-header">
+          <span style="font-size: 2rem;">📱</span>
+          <div>
+            <h3 class="ios-fs-title">Schermo Intero su iPhone</h3>
+            <p class="ios-fs-sub">Safari per iOS non supporta il fullscreen da pulsante.</p>
+          </div>
+        </div>
+
+        <div class="ios-fs-steps">
+          <div class="ios-step-row">
+            <div class="ios-step-badge">1</div>
+            <div class="ios-step-text">
+              Tocca il tasto <strong>Condividi</strong> in basso al centro in Safari (l'icona quadrata con la freccia in su <strong>⎋</strong>).
+            </div>
+          </div>
+          <div class="ios-step-row">
+            <div class="ios-step-badge">2</div>
+            <div class="ios-step-text">
+              Scorri il menu e tocca <strong>"Aggiungi a schermata Home"</strong>.
+            </div>
+          </div>
+          <div class="ios-step-row">
+            <div class="ios-step-badge">3</div>
+            <div class="ios-step-text">
+              Apri l'icona creata sulla Home: l'app si aprirà a <strong>schermo intero reale al 100%</strong> senza barre del browser!
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-close-ios-modal" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.05rem; border-radius: 14px;">
+          Ho Capito 👍
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="/js/audio.js"></script>
