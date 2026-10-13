@@ -278,50 +278,112 @@ function showPodium() {
   io.emit('game:podium', { leaderboard });
 }
 
+// Mappa socket.id -> playerId
+const socketToPlayerId = {};
+
 // Socket.io handlers
 io.on('connection', (socket) => {
   // Sync stato corrente al nuovo arrivato
+  const currentQ = questions[gameState.currentQuestionIndex];
   socket.emit('game:syncState', {
     status: gameState.status,
     currentQuestionIndex: gameState.currentQuestionIndex,
     totalQuestions: questions.length,
-    playerCount: Object.keys(gameState.players).length
+    playerCount: Object.values(gameState.players).length,
+    timeRemaining: gameState.timeRemaining,
+    currentQuestion: (gameState.status === 'QUESTION' && currentQ) ? {
+      questionIndex: gameState.currentQuestionIndex,
+      totalQuestions: questions.length,
+      category: currentQ.category,
+      question: currentQ.question,
+      options: currentQ.options,
+      timeLimit: currentQ.timeLimit || 20
+    } : null
   });
 
-  // Giocatore si registra
-  socket.on('player:join', ({ nickname, avatar }) => {
+  // Invia SEMPRE l'elenco dei giocatori a chiunque si colleghi (incluso l'host che fa Ctrl+F5)
+  socket.emit('host:playersUpdated', Object.values(gameState.players));
+
+  // Giocatore si registra o si riconnette
+  socket.on('player:join', ({ nickname, avatar, playerId }) => {
     const cleanNick = (nickname || 'Matricola').trim().slice(0, 16);
-    gameState.players[socket.id] = {
-      id: socket.id,
-      nickname: cleanNick,
-      avatar: avatar || '🎓',
-      score: 0,
-      streak: 0,
-      lastAnswer: null,
-      lastAnswerTime: 0,
-      lastPointsEarned: 0
-    };
+    const pid = playerId || `p_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-    socket.emit('player:joined', {
-      id: socket.id,
-      nickname: cleanNick,
-      avatar: gameState.players[socket.id].avatar,
-      status: gameState.status
-    });
+    socketToPlayerId[socket.id] = pid;
 
-    // Invia lista aggiornata a host e admin
+    if (gameState.players[pid]) {
+      // Riconnessione dello stesso giocatore (es. Ctrl+F5): mantieni punti e serie!
+      const existing = gameState.players[pid];
+      existing.socketId = socket.id;
+      existing.connected = true;
+      if (nickname) existing.nickname = cleanNick;
+      if (avatar) existing.avatar = avatar;
+
+      socket.emit('player:joined', {
+        id: pid,
+        nickname: existing.nickname,
+        avatar: existing.avatar,
+        status: gameState.status,
+        score: existing.score,
+        streak: existing.streak
+      });
+    } else {
+      // Nuovo giocatore
+      gameState.players[pid] = {
+        id: pid,
+        socketId: socket.id,
+        nickname: cleanNick,
+        avatar: avatar || '🎓',
+        score: 0,
+        streak: 0,
+        connected: true,
+        lastAnswer: null,
+        lastAnswerTime: 0,
+        lastPointsEarned: 0
+      };
+
+      socket.emit('player:joined', {
+        id: pid,
+        nickname: cleanNick,
+        avatar: gameState.players[pid].avatar,
+        status: gameState.status,
+        score: 0,
+        streak: 0
+      });
+    }
+
+    // Se c'è una domanda in corso, inviala subito al giocatore riconnesso
+    if (gameState.status === 'QUESTION' && currentQ) {
+      socket.emit('game:questionStarted', {
+        questionIndex: gameState.currentQuestionIndex,
+        totalQuestions: questions.length,
+        category: currentQ.category,
+        question: currentQ.question,
+        options: currentQ.options,
+        timeLimit: gameState.timeRemaining || currentQ.timeLimit || 20
+      });
+      // Se aveva già risposto
+      if (gameState.answersCurrentQuestion[pid] !== undefined) {
+        socket.emit('player:answerAck');
+      }
+    }
+
+    // Notifica host e admin
     io.emit('host:playersUpdated', Object.values(gameState.players));
   });
 
   // Giocatore invia risposta
   socket.on('player:submitAnswer', ({ optionIndex }) => {
     if (gameState.status !== 'QUESTION') return;
-    if (gameState.answersCurrentQuestion[socket.id] !== undefined) return; // già risposto
+    const pid = socketToPlayerId[socket.id];
+    if (!pid) return;
 
-    const player = gameState.players[socket.id];
+    if (gameState.answersCurrentQuestion[pid] !== undefined) return; // già risposto
+
+    const player = gameState.players[pid];
     if (!player) return;
 
-    gameState.answersCurrentQuestion[socket.id] = optionIndex;
+    gameState.answersCurrentQuestion[pid] = optionIndex;
     player.lastAnswer = optionIndex;
     player.lastAnswerTime = gameState.timeRemaining;
 
@@ -330,12 +392,12 @@ io.on('connection', (socket) => {
     }
 
     const answeredCount = Object.keys(gameState.answersCurrentQuestion).length;
-    const totalPlayers = Object.keys(gameState.players).length;
+    const totalPlayers = Object.values(gameState.players).filter(p => p.connected).length;
 
     socket.emit('player:answerAck', { optionIndex });
     io.emit('game:answersCountUpdated', { answeredCount, totalPlayers });
 
-    // Se tutti hanno risposto, chiudi subito la domanda
+    // Se tutti i giocatori connessi hanno risposto, chiudi subito
     if (answeredCount >= totalPlayers && totalPlayers > 0) {
       revealAnswer();
     }
@@ -391,22 +453,22 @@ io.on('connection', (socket) => {
 
   socket.on('admin:kickPlayer', ({ playerId }) => {
     if (gameState.players[playerId]) {
+      const sockId = gameState.players[playerId].socketId;
       delete gameState.players[playerId];
-      io.to(playerId).emit('player:kicked');
+      delete gameState.answersCurrentQuestion[playerId];
+      if (sockId) io.to(sockId).emit('player:kicked');
       io.emit('host:playersUpdated', Object.values(gameState.players));
     }
   });
 
-  // Disconnessione
+  // Disconnessione (NON cancella il punteggio, segna solo offline per consentire il reconnect!)
   socket.on('disconnect', () => {
-    if (gameState.players[socket.id]) {
-      delete gameState.players[socket.id];
-      delete gameState.answersCurrentQuestion[socket.id];
+    const pid = socketToPlayerId[socket.id];
+    if (pid && gameState.players[pid]) {
+      gameState.players[pid].connected = false;
+      delete socketToPlayerId[socket.id];
+      // Notifica solo aggiornamento presenze senza azzerare
       io.emit('host:playersUpdated', Object.values(gameState.players));
-      io.emit('game:answersCountUpdated', {
-        answeredCount: Object.keys(gameState.answersCurrentQuestion).length,
-        totalPlayers: Object.keys(gameState.players).length
-      });
     }
   });
 });

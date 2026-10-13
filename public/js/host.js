@@ -15,7 +15,27 @@ function showScreen(name) {
       screens[key].classList.toggle('active', key === name);
     }
   });
+  window.scrollTo(0, 0);
 }
+
+// Ripristino stato se l'host ricarica la pagina con Ctrl+F5
+socket.on('game:syncState', (state) => {
+  if (state.status === 'QUESTION' && state.currentQuestion) {
+    showScreen('question');
+    document.getElementById('category-badge').textContent = state.currentQuestion.category || 'UniMe';
+    document.getElementById('question-index-badge').textContent = `DOMANDA ${state.currentQuestion.questionIndex + 1} / ${state.currentQuestion.totalQuestions}`;
+    document.getElementById('question-text').textContent = state.currentQuestion.question;
+    document.getElementById('timer-display').textContent = state.timeRemaining || state.currentQuestion.timeLimit;
+    for (let i = 0; i < 4; i++) {
+      const text = document.getElementById(`opt-text-${i}`);
+      if (text) text.textContent = state.currentQuestion.options[i] || '';
+    }
+  } else if (state.status === 'LEADERBOARD') {
+    showScreen('leaderboard');
+  } else if (state.status === 'PODIUM') {
+    showScreen('podium');
+  }
+});
 
 // Fullscreen & Audio controls
 const btnFullscreen = document.getElementById('btn-fullscreen');

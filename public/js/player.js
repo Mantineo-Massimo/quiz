@@ -23,6 +23,18 @@ let selectedAvatar = '🎓';
 let playerNickname = '';
 let isJoined = false;
 
+// Persistent player ID generato una sola volta per dispositivo
+let myPlayerId = '';
+try {
+  myPlayerId = localStorage.getItem('unime_quiz_pid');
+  if (!myPlayerId) {
+    myPlayerId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    localStorage.setItem('unime_quiz_pid', myPlayerId);
+  }
+} catch (e) {
+  myPlayerId = 'p_' + Date.now();
+}
+
 // Avatar Selector
 const avatarBtns = document.querySelectorAll('.avatar-btn');
 avatarBtns.forEach(btn => {
@@ -40,6 +52,7 @@ try {
   const savedAvatar = localStorage.getItem('unime_quiz_avatar');
   if (savedNick) {
     document.getElementById('input-nickname').value = savedNick;
+    playerNickname = savedNick;
   }
   if (savedAvatar) {
     selectedAvatar = savedAvatar;
@@ -48,6 +61,20 @@ try {
     });
   }
 } catch (e) {}
+
+// Auto-riconnessione immediata se l'utente aveva già inserito il nickname (anche su Ctrl+F5)
+socket.on('connect', () => {
+  try {
+    const savedNick = localStorage.getItem('unime_quiz_nick');
+    if (savedNick && !isJoined) {
+      socket.emit('player:join', {
+        nickname: savedNick,
+        avatar: selectedAvatar,
+        playerId: myPlayerId
+      });
+    }
+  } catch (e) {}
+});
 
 // Join Game
 const btnJoin = document.getElementById('btn-join');
@@ -73,10 +100,10 @@ function handleJoin() {
     localStorage.setItem('unime_quiz_avatar', selectedAvatar);
   } catch (e) {}
 
-  socket.emit('player:join', { nickname: nick, avatar: selectedAvatar });
+  socket.emit('player:join', { nickname: nick, avatar: selectedAvatar, playerId: myPlayerId });
 }
 
-socket.on('player:joined', ({ nickname, avatar, status }) => {
+socket.on('player:joined', ({ nickname, avatar, status, score, streak }) => {
   isJoined = true;
 
   // Mostra display LCD della pulsantiera
@@ -85,7 +112,7 @@ socket.on('player:joined', ({ nickname, avatar, status }) => {
     lcdDisplay.style.display = 'flex';
     document.getElementById('lcd-nickname').textContent = nickname;
     document.getElementById('lcd-avatar').textContent = avatar;
-    document.getElementById('lcd-score-num').textContent = '0';
+    document.getElementById('lcd-score-num').textContent = (score || 0).toLocaleString();
   }
 
   document.getElementById('my-avatar-display').textContent = avatar;
