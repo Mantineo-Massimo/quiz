@@ -62,11 +62,15 @@ try {
   }
 } catch (e) {}
 
-// Auto-riconnessione immediata se l'utente aveva già inserito il nickname (anche su Ctrl+F5)
-socket.on('connect', () => {
+// Funzione di Auto-riconnessione immediata della pulsantiera
+function tryAutoJoin() {
   try {
     const savedNick = localStorage.getItem('unime_quiz_nick');
     if (savedNick && !isJoined) {
+      // Mostra subito la schermata di attesa/pulsantiera evitando il form di login
+      document.getElementById('my-nick-display').textContent = `Pulsantiera: ${savedNick}`;
+      showView('waiting');
+
       socket.emit('player:join', {
         nickname: savedNick,
         avatar: selectedAvatar,
@@ -74,7 +78,12 @@ socket.on('connect', () => {
       });
     }
   } catch (e) {}
-});
+}
+
+if (socket.connected) {
+  tryAutoJoin();
+}
+socket.on('connect', tryAutoJoin);
 
 // Join Game
 const btnJoin = document.getElementById('btn-join');
@@ -103,6 +112,15 @@ function handleJoin() {
   socket.emit('player:join', { nickname: nick, avatar: selectedAvatar, playerId: myPlayerId });
 }
 
+// Consenti di cambiare nickname se lo desidera
+const btnEditTeam = document.getElementById('btn-edit-team');
+if (btnEditTeam) {
+  btnEditTeam.addEventListener('click', () => {
+    showView('join');
+    inputNick.focus();
+  });
+}
+
 socket.on('player:joined', ({ nickname, avatar, status, score, streak }) => {
   isJoined = true;
 
@@ -120,6 +138,8 @@ socket.on('player:joined', ({ nickname, avatar, status, score, streak }) => {
 
   if (status === 'LOBBY' || status === 'COUNTDOWN' || status === 'LEADERBOARD') {
     showView('waiting');
+  } else if (status === 'QUESTION') {
+    showView('question');
   }
 });
 
