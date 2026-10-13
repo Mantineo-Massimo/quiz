@@ -476,7 +476,8 @@ io.on('connection', (socket) => {
 server.listen(PORT, '0.0.0.0', () => {
   const ips = getLocalIpAddresses();
   console.log(`\n======================================================`);
-  console.log(`🎯 UNIME QUIZ NIGHT (Morgana & ORUM) ATTIVO SU PORTA ${PORT}`);
+  console.log(`🎯 UNIME LEVEL UP: L'interactive info show per le matricole`);
+  console.log(`🏛️ Organizzato da Morgana & O.R.U.M. • Porta ${PORT}`);
   console.log(`🖥️  SCHERMO PRINCIPALE (Host): http://localhost:${PORT}/host`);
   console.log(`📱 PARTECIPANTI (Mobile):      http://${ips[0] || 'localhost'}:${PORT}`);
   console.log(`⚙️  REGIA / ADMIN:             http://localhost:${PORT}/admin`);
