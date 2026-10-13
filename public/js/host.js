@@ -76,6 +76,7 @@ socket.on('game:syncState', (state) => {
 // Fullscreen & Audio controls
 const btnFullscreen = document.getElementById('btn-fullscreen');
 btnFullscreen.addEventListener('click', () => {
+  btnFullscreen.blur();
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
   } else {
@@ -243,9 +244,9 @@ function renderLeaderboard(leaderboard, isLastQuestion) {
 
   const btnNext = document.getElementById('btn-next-question');
   if (isLastQuestion) {
-    btnNext.textContent = '🏆 VAI AL PODIO FINALE! (Spazio)';
+    btnNext.textContent = '🏆 VAI AL PODIO FINALE!';
   } else {
-    btnNext.textContent = 'PROSSIMA DOMANDA ➡️ (Spazio)';
+    btnNext.textContent = 'PROSSIMA DOMANDA ➡️';
   }
 }
 
@@ -323,11 +324,26 @@ socket.on('game:resetToLobby', () => {
   showScreen('lobby');
 });
 
-// Scorciatoie da tastiera per l'Host (Spazio / Invio)
+// Rimuovi il focus da qualsiasi elemento cliccato per evitare attivazioni indesiderate con Spazio
+document.addEventListener('click', () => {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+});
+
+// Avanzamento riservato all'Host tramite Spazio / Invio
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' || e.code === 'Enter') {
-    // Evita se si sta scrivendo in un input
-    if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space' || e.key === ' ' || e.code === 'Enter') {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+    // FONDAMENTALE: blocca il comportamento default del browser (scroll pagina o click su pulsante con focus)
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Rimuove immediatamente il focus attivo da qualsiasi pulsante
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
 
     if (screens.lobby.classList.contains('active')) {
       socket.emit('admin:startGame');
@@ -336,11 +352,17 @@ window.addEventListener('keydown', (e) => {
       if (expBox.style.display !== 'none') {
         socket.emit('admin:next');
       } else {
-        // Se si preme spazio durante la domanda, rivela subito
         socket.emit('admin:revealNow');
       }
     } else if (screens.leaderboard.classList.contains('active')) {
       socket.emit('admin:next');
     }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'Space' || e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
   }
 });
