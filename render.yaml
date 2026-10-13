@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: unime-quiz-night
+    name: quiz-unime
     runtime: node
     plan: free
     buildCommand: npm install
