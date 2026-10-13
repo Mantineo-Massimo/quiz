@@ -78,15 +78,27 @@ function getLeaderboard() {
 
 // API Endpoints
 app.get('/api/network', async (req, res) => {
+  const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host;
+  
+  let detectedPublicUrl = '';
+  if (hostHeader && !hostHeader.includes('localhost') && !hostHeader.includes('127.0.0.1') && !hostHeader.startsWith('10.') && !hostHeader.startsWith('192.168.')) {
+    detectedPublicUrl = `${protocol}://${hostHeader}`;
+  }
+
   const ips = getLocalIpAddresses();
   const primaryIp = ips[0] || 'localhost';
-  const url = customPublicUrl || `http://${primaryIp}:${PORT}`;
+  const localUrl = `http://${primaryIp}:${PORT}`;
+  
+  const clientOrigin = req.query.origin;
+  const url = customPublicUrl || clientOrigin || detectedPublicUrl || localUrl;
+
   try {
     const qrDataUrl = await QRCode.toDataURL(url, {
       margin: 2,
       scale: 8,
       color: {
-        dark: '#0a192f',
+        dark: '#090e1a',
         light: '#ffffff'
       }
     });

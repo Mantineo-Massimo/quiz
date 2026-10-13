@@ -36,14 +36,15 @@ btnSound.addEventListener('click', () => {
 // Fetch Network Info & QR Code
 async function loadNetworkInfo() {
   try {
-    const res = await fetch('/api/network');
+    const origin = window.location.origin;
+    const res = await fetch(`/api/network?origin=${encodeURIComponent(origin)}`);
     const data = await res.json();
     const qrImg = document.getElementById('qr-image');
     const urlText = document.getElementById('join-url-text');
     if (data.qrDataUrl) {
       qrImg.src = data.qrDataUrl;
     }
-    urlText.textContent = data.url;
+    urlText.textContent = data.url || origin;
   } catch (err) {
     console.error('Errore caricamento network:', err);
   }
