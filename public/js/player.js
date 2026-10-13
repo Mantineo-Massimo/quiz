@@ -185,22 +185,18 @@ if (btnEditTeam) {
 socket.on('player:joined', (data) => {
   isJoined = true;
 
-  // Mostra display LCD della pulsantiera
+  // Mostra display LCD della pulsantiera (senza punteggio)
   const lcdDisplay = document.getElementById('lcd-display');
   if (lcdDisplay) {
     lcdDisplay.style.display = 'flex';
     document.getElementById('lcd-nickname').textContent = data.nickname;
     document.getElementById('lcd-avatar').textContent = data.avatar;
-    document.getElementById('lcd-score-num').textContent = (data.score || 0).toLocaleString();
-    if (data.rank) {
-      document.getElementById('lcd-rank-text').textContent = `POSIZIONE: #${data.rank} / ${data.totalPlayers || 1}`;
-    }
   }
 
   document.getElementById('my-avatar-display').textContent = data.avatar;
   document.getElementById('my-nick-display').textContent = `Pulsantiera: ${data.nickname}`;
 
-  if (data.status === 'LOBBY' || data.status === 'COUNTDOWN' || data.status === 'LEADERBOARD') {
+  if (data.status === 'LOBBY' || data.status === 'COUNTDOWN') {
     showView('waiting');
   } else if (data.status === 'QUESTION') {
     if (data.playerAnswer !== undefined) {
@@ -211,29 +207,12 @@ socket.on('player:joined', (data) => {
       showView('question');
     }
   } else if (data.status === 'SHOW_ANSWER') {
-    showView('result');
-    const resultBox = document.getElementById('result-box');
-    const emoji = document.getElementById('result-emoji');
-    const title = document.getElementById('result-status');
-    const pts = document.getElementById('result-pts');
-    const streakEl = document.getElementById('result-streak');
-    const rankEl = document.getElementById('result-rank');
-
-    resultBox.className = 'round-result-card ' + (data.isCorrect ? 'correct' : 'wrong');
-    if (data.isCorrect) {
-      emoji.textContent = '⚡';
-      title.textContent = 'ESATTO!';
-      title.style.color = '#22c55e';
-      pts.textContent = `+${data.pointsEarned || 0} Punti`;
-      streakEl.textContent = data.streak > 1 ? `🔥 SERIE PERFETTA: ${data.streak} DI FILA!` : '';
-    } else {
-      emoji.textContent = '❌';
-      title.textContent = 'RISPOSTA ERRATA!';
-      title.style.color = '#e11d48';
-      pts.textContent = '+0 Punti';
-      streakEl.textContent = 'Recupera con la prossima!';
-    }
-    rankEl.textContent = `TABELLONE: #${data.rank || 1} su ${data.totalPlayers || 1} (${(data.score || 0).toLocaleString()} pt)`;
+    // I giocatori vedono solo la risposta inviata, senza punteggi sul telefono
+    showView('answered');
+  } else if (data.status === 'LEADERBOARD') {
+    showView('waiting');
+    document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
+    document.querySelector('.waiting-sub').textContent = 'Classifica proiettata in sala...';
   } else if (data.status === 'PODIUM') {
     showView('gameOver');
   }
@@ -288,48 +267,23 @@ socket.on('player:answerAck', () => {
 });
 
 // Round Result
-socket.on('player:roundResult', ({ isCorrect, pointsEarned, totalScore, streak, rank, totalPlayers }) => {
+// Round Result: i giocatori vedono solo che la risposta è stata inviata, niente punteggi
+socket.on('player:roundResult', ({ isCorrect }) => {
   if (!isJoined) return;
-  showView('result');
-
-  // Aggiorna LCD
-  document.getElementById('lcd-score-num').textContent = totalScore.toLocaleString();
-  document.getElementById('lcd-rank-text').textContent = `POSIZIONE: #${rank} / ${totalPlayers}`;
-
-  const resultBox = document.getElementById('result-box');
-  const emoji = document.getElementById('result-emoji');
-  const title = document.getElementById('result-status');
-  const pts = document.getElementById('result-pts');
-  const streakEl = document.getElementById('result-streak');
-  const rankEl = document.getElementById('result-rank');
-
-  resultBox.className = 'round-result-card ' + (isCorrect ? 'correct' : 'wrong');
-
+  showView('answered');
   if (isCorrect) {
     window.sounds.playCorrect();
-    emoji.textContent = '⚡';
-    title.textContent = 'ESATTO!';
-    title.style.color = '#22c55e';
-    pts.textContent = `+${pointsEarned} Punti`;
-    streakEl.textContent = streak > 1 ? `🔥 SERIE PERFETTA: ${streak} DI FILA!` : '';
   } else {
     window.sounds.playWrong();
-    emoji.textContent = '❌';
-    title.textContent = 'RISPOSTA ERRATA!';
-    title.style.color = '#e11d48';
-    pts.textContent = '+0 Punti';
-    streakEl.textContent = 'Recupera con la prossima!';
   }
-
-  rankEl.textContent = `TABELLONE: #${rank} su ${totalPlayers} (${totalScore.toLocaleString()} pt)`;
 });
 
 // Leaderboard / Waiting state
 socket.on('game:leaderboard', () => {
   if (!isJoined) return;
   showView('waiting');
-  document.getElementById('my-nick-display').textContent = 'Guarda il Tabellone!';
-  document.querySelector('.waiting-sub').textContent = 'Punteggi e posizioni sul maxischermo...';
+  document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
+  document.querySelector('.waiting-sub').textContent = 'Classifica proiettata in sala...';
 });
 
 // Countdown state
@@ -341,19 +295,9 @@ socket.on('game:countdown', () => {
 });
 
 // Podium / Game Over
-socket.on('game:podium', ({ leaderboard }) => {
+socket.on('game:podium', () => {
   if (!isJoined) return;
   showView('gameOver');
-
-  const myRankInfo = leaderboard.find(p => p.nickname === playerNickname);
-  const statsBox = document.getElementById('final-stats-box');
-
-  if (myRankInfo) {
-    statsBox.innerHTML = `
-      <div style="font-size: 1.8rem; color: var(--accent-gold); margin-bottom: 6px;">#${myRankInfo.rank} CLASSIFICATO</div>
-      <div>Punteggio Finale: <strong>${myRankInfo.score.toLocaleString()} pt</strong></div>
-    `;
-  }
 });
 
 // Reset to Lobby
