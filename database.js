@@ -4,9 +4,11 @@ const path = require('path');
 const DB_FILE = path.join(__dirname, 'db.json');
 
 const defaultState = {
-  status: 'LOBBY', // 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'SHOW_ANSWER' | 'LEADERBOARD' | 'PODIUM'
+  status: 'LOBBY', // 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'SHOW_ANSWER' | 'LEADERBOARD' | 'FINAL_REVEAL' | 'PODIUM'
   currentQuestionIndex: 0,
   timeRemaining: 20,
+  finalRevealStep: 0,
+  podiumStep: 0,
   players: {}, // playerId -> { id, nickname, avatar, score, streak, connected, lastAnswer, lastAnswerTime, lastPointsEarned }
   answersCurrentQuestion: {}, // playerId -> optionIndex
   answerStats: [0, 0, 0, 0]
@@ -26,6 +28,8 @@ class Database {
         return {
           ...defaultState,
           ...parsed,
+          finalRevealStep: parsed.finalRevealStep || 0,
+          podiumStep: parsed.podiumStep || 0,
           players: parsed.players || {},
           answersCurrentQuestion: parsed.answersCurrentQuestion || {},
           answerStats: parsed.answerStats || [0, 0, 0, 0]
@@ -43,6 +47,8 @@ class Database {
         status: this.state.status,
         currentQuestionIndex: this.state.currentQuestionIndex,
         timeRemaining: this.state.timeRemaining,
+        finalRevealStep: this.state.finalRevealStep || 0,
+        podiumStep: this.state.podiumStep || 0,
         players: this.state.players,
         answersCurrentQuestion: this.state.answersCurrentQuestion,
         answerStats: this.state.answerStats
@@ -60,6 +66,8 @@ class Database {
     this.state.status = 'LOBBY';
     this.state.currentQuestionIndex = 0;
     this.state.timeRemaining = 20;
+    this.state.finalRevealStep = 0;
+    this.state.podiumStep = 0;
     this.state.answersCurrentQuestion = {};
     this.state.answerStats = [0, 0, 0, 0];
     for (const p of Object.values(this.state.players)) {
@@ -73,6 +81,8 @@ class Database {
 
   clearPlayers() {
     this.state.players = {};
+    this.state.finalRevealStep = 0;
+    this.state.podiumStep = 0;
     this.state.answersCurrentQuestion = {};
     this.state.answerStats = [0, 0, 0, 0];
     this.save();

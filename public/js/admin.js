@@ -42,14 +42,42 @@ function updateLiveStatus(state) {
   } else if (state.status === 'LEADERBOARD') {
     statusText.textContent = 'CLASSIFICA PARZIALE';
     statusText.style.color = '#a855f7';
-  } else if (state.status === 'PODIUM') {
-    statusText.textContent = '🏆 PODIO FINALE MOSTRATO';
+    btnNext.textContent = '➡️ Prossima Domanda / Gran Finale';
+  } else if (state.status === 'FINAL_REVEAL') {
+    const step = state.finalRevealStep || 0;
+    const total = state.totalNonPodium || 0;
+    statusText.textContent = `CLASSIFICA FINALE (${step}/${total} Svelate)`;
     statusText.style.color = 'var(--accent-gold)';
+    if (step < total) {
+      btnNext.textContent = `⏭️ Svela Posizione #${total - step + 3}`;
+    } else {
+      btnNext.textContent = '👑 Passa al Podio dei Vincitori!';
+    }
+  } else if (state.status === 'PODIUM') {
+    const step = state.podiumStep || 0;
+    statusText.textContent = `🏆 PODIO (${step}/3 Svelati)`;
+    statusText.style.color = 'var(--accent-gold)';
+    if (step === 0) btnNext.textContent = '🥉 Svela 3° Posto';
+    else if (step === 1) btnNext.textContent = '🥈 Svela 2° Posto';
+    else if (step === 2) btnNext.textContent = '🥇 Svela 1° Posto (Campione)';
+    else btnNext.textContent = '🎊 Lancia Coriandoli!';
+  } else {
+    btnNext.textContent = '➡️ Prossimo Step';
   }
 }
 
+const btnNext = document.getElementById('admin-btn-next');
+
 socket.on('game:syncState', (state) => {
   updateLiveStatus(state);
+});
+
+socket.on('game:finalReveal', (data) => {
+  updateLiveStatus({ status: 'FINAL_REVEAL', ...data });
+});
+
+socket.on('game:podium', (data) => {
+  updateLiveStatus({ status: 'PODIUM', ...data });
 });
 
 socket.on('game:questionStarted', (data) => {

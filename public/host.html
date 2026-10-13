@@ -164,42 +164,81 @@
       </div>
     </main>
 
+    <!-- 4b. SCREEN FINAL REVEAL (Svelamento Progressivo Classifica) -->
+    <main id="screen-final-reveal" class="screen">
+      <div class="finale-header">
+        <span class="finale-badge">🏆 GRAN FINALE • UNIME LEVEL UP</span>
+        <h2 class="leaderboard-title" style="margin-bottom: 8px;">CLASSIFICA FINALE</h2>
+        <p id="finale-status-sub" class="finale-sub">In attesa dello svelamento delle posizioni...</p>
+      </div>
+
+      <div class="final-reveal-wrap">
+        <div id="final-reveal-grid" class="final-reveal-grid">
+          <!-- Carte svelate progressivamente ad ogni pressione tasto -->
+        </div>
+      </div>
+
+      <div id="finale-action-bar" class="finale-action-bar" style="display: none;">
+        <button id="btn-finale-to-podium" class="btn btn-primary btn-start-giant">
+          👑 VAI AL PODIO DEI VINCITORI! ➡️
+        </button>
+      </div>
+    </main>
+
     <!-- 5. SCREEN PODIUM -->
     <main id="screen-podium" class="screen">
-      <h2 class="leaderboard-title" style="color: var(--accent-gold); font-size: 3.4rem;">
-        🏆 I CAMPIONI DELLA SERATA 🏆
+      <h2 class="leaderboard-title" style="color: var(--accent-gold); font-size: 3.4rem; margin-bottom: 10px;">
+        🏆 IL PODIO DEI VINCITORI 🏆
       </h2>
-      <p style="text-align: center; color: #cbd5e1; font-size: 1.25rem; margin-top: -16px;">
-        MORGANA &amp; O.R.U.M. ringraziano tutti gli studenti UniMe per la partecipazione!
+      <p id="podium-status-sub" class="podium-status-sub">
+        In attesa di svelare il 3° Posto...
       </p>
 
       <div class="podium-container">
         <!-- 2° Posto -->
-        <div class="podium-step podium-2">
+        <div id="podium-step-2" class="podium-step podium-2 mystery">
           <div class="podium-player-card">
-            <span id="podium-avatar-2" class="avatar">🥈</span>
-            <div id="podium-name-2" class="name">---</div>
-            <div id="podium-pts-2" class="pts">0 pt</div>
+            <div id="podium-mystery-2" class="mystery-box">
+              <span class="mystery-icon">❓</span>
+              <div class="mystery-label">2° Posto</div>
+            </div>
+            <div id="podium-content-2" class="podium-content" style="display: none;">
+              <span id="podium-avatar-2" class="avatar">🥈</span>
+              <div id="podium-name-2" class="name">---</div>
+              <div id="podium-pts-2" class="pts">0 pt</div>
+            </div>
           </div>
           <div class="podium-block">2</div>
         </div>
 
         <!-- 1° Posto -->
-        <div class="podium-step podium-1">
+        <div id="podium-step-1" class="podium-step podium-1 mystery">
           <div class="podium-player-card">
-            <span id="podium-avatar-1" class="avatar">🥇</span>
-            <div id="podium-name-1" class="name">---</div>
-            <div id="podium-pts-1" class="pts">0 pt</div>
+            <div id="podium-mystery-1" class="mystery-box">
+              <span class="mystery-icon">👑</span>
+              <div class="mystery-label">1° Posto</div>
+            </div>
+            <div id="podium-content-1" class="podium-content" style="display: none;">
+              <span id="podium-avatar-1" class="avatar">🥇</span>
+              <div id="podium-name-1" class="name">---</div>
+              <div id="podium-pts-1" class="pts">0 pt</div>
+            </div>
           </div>
           <div class="podium-block">1</div>
         </div>
 
         <!-- 3° Posto -->
-        <div class="podium-step podium-3">
+        <div id="podium-step-3" class="podium-step podium-3 mystery">
           <div class="podium-player-card">
-            <span id="podium-avatar-3" class="avatar">🥉</span>
-            <div id="podium-name-3" class="name">---</div>
-            <div id="podium-pts-3" class="pts">0 pt</div>
+            <div id="podium-mystery-3" class="mystery-box">
+              <span class="mystery-icon">❓</span>
+              <div class="mystery-label">3° Posto</div>
+            </div>
+            <div id="podium-content-3" class="podium-content" style="display: none;">
+              <span id="podium-avatar-3" class="avatar">🥉</span>
+              <div id="podium-name-3" class="name">---</div>
+              <div id="podium-pts-3" class="pts">0 pt</div>
+            </div>
           </div>
           <div class="podium-block">3</div>
         </div>

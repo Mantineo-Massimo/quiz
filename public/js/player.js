@@ -213,6 +213,10 @@ socket.on('player:joined', (data) => {
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
     document.querySelector('.waiting-sub').textContent = 'Classifica proiettata in sala...';
+  } else if (data.status === 'FINAL_REVEAL') {
+    showView('waiting');
+    document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
+    document.querySelector('.waiting-sub').textContent = 'Svelamento classifica finale in corso...';
   } else if (data.status === 'PODIUM') {
     showView('gameOver');
   }
@@ -284,6 +288,13 @@ socket.on('game:leaderboard', () => {
   showView('waiting');
   document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
   document.querySelector('.waiting-sub').textContent = 'Classifica proiettata in sala...';
+});
+
+socket.on('game:finalReveal', () => {
+  if (!isJoined) return;
+  showView('waiting');
+  document.getElementById('my-nick-display').textContent = 'Guarda il Maxischermo!';
+  document.querySelector('.waiting-sub').textContent = 'Svelamento classifica finale in corso...';
 });
 
 // Countdown state

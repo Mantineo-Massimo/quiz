@@ -158,6 +158,9 @@ function sendSyncState(target) {
     explanation: currentQ ? (currentQ.explanation || '') : '',
     answerStats: gameState.answerStats || [0, 0, 0, 0],
     answeredCount: Object.keys(gameState.answersCurrentQuestion || {}).length,
+    finalRevealStep: gameState.finalRevealStep || 0,
+    podiumStep: gameState.podiumStep || 0,
+    totalNonPodium: Math.max(0, leaderboard.length - 3),
     leaderboard
   };
 
@@ -275,7 +278,7 @@ function launchQuestion() {
 
   const currentQ = questions[gameState.currentQuestionIndex];
   if (!currentQ) {
-    showPodium();
+    startFinale();
     return;
   }
 
@@ -309,13 +312,32 @@ function showLeaderboard() {
   });
 }
 
-function showPodium() {
+function startFinale() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
-  gameState.status = 'PODIUM';
-  db.save(); // SALVA NEL DATABASE
-
   const leaderboard = getLeaderboard();
-  io.emit('game:podium', { leaderboard });
+  const nonPodiumCount = Math.max(0, leaderboard.length - 3);
+
+  if (nonPodiumCount > 0) {
+    gameState.status = 'FINAL_REVEAL';
+    gameState.finalRevealStep = 0;
+    gameState.podiumStep = 0;
+    db.save();
+    io.emit('game:finalReveal', {
+      leaderboard,
+      finalRevealStep: gameState.finalRevealStep,
+      totalNonPodium: nonPodiumCount
+    });
+  } else {
+    gameState.status = 'PODIUM';
+    gameState.finalRevealStep = 0;
+    gameState.podiumStep = 0;
+    db.save();
+    io.emit('game:podium', {
+      leaderboard,
+      podiumStep: gameState.podiumStep
+    });
+  }
+  sendSyncState();
 }
 
 // Mappa socket.id -> playerId
@@ -450,8 +472,10 @@ io.on('connection', (socket) => {
         gameState.currentQuestionIndex++;
         startCountdown();
       } else {
-        showPodium();
+        startFinale();
       }
+    } else if (gameState.status === 'FINAL_REVEAL' || gameState.status === 'PODIUM') {
+      advanceFinale();
     }
   });
 
@@ -461,8 +485,73 @@ io.on('connection', (socket) => {
     }
   });
 
+  function advanceFinale() {
+    const leaderboard = getLeaderboard();
+    const nonPodiumCount = Math.max(0, leaderboard.length - 3);
+
+    if (gameState.status === 'FINAL_REVEAL') {
+      if (gameState.finalRevealStep < nonPodiumCount) {
+        gameState.finalRevealStep++;
+        db.save();
+        io.emit('game:finalReveal', {
+          leaderboard,
+          finalRevealStep: gameState.finalRevealStep,
+          totalNonPodium: nonPodiumCount
+        });
+      } else {
+        // Passa al podio dei primi 3!
+        gameState.status = 'PODIUM';
+        gameState.podiumStep = 0;
+        db.save();
+        io.emit('game:podium', {
+          leaderboard,
+          podiumStep: gameState.podiumStep
+        });
+      }
+      sendSyncState();
+    } else if (gameState.status === 'PODIUM') {
+      if (gameState.podiumStep < 3) {
+        gameState.podiumStep++;
+        db.save();
+        io.emit('game:podium', {
+          leaderboard,
+          podiumStep: gameState.podiumStep
+        });
+        sendSyncState();
+      }
+    }
+  }
+
+  socket.on('admin:advanceFinale', () => {
+    advanceFinale();
+  });
+
+  socket.on('admin:skipToPodium', () => {
+    const leaderboard = getLeaderboard();
+    gameState.status = 'PODIUM';
+    gameState.podiumStep = 0;
+    db.save();
+    io.emit('game:podium', {
+      leaderboard,
+      podiumStep: gameState.podiumStep
+    });
+    sendSyncState();
+  });
+
+  socket.on('admin:revealAllPodium', () => {
+    const leaderboard = getLeaderboard();
+    gameState.status = 'PODIUM';
+    gameState.podiumStep = 3;
+    db.save();
+    io.emit('game:podium', {
+      leaderboard,
+      podiumStep: 3
+    });
+    sendSyncState();
+  });
+
   socket.on('admin:showPodium', () => {
-    showPodium();
+    startFinale();
   });
 
   socket.on('admin:resetLobby', () => {

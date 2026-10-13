@@ -6,6 +6,7 @@ const screens = {
   countdown: document.getElementById('screen-countdown'),
   question: document.getElementById('screen-question'),
   leaderboard: document.getElementById('screen-leaderboard'),
+  finalReveal: document.getElementById('screen-final-reveal'),
   podium: document.getElementById('screen-podium')
 };
 
@@ -68,8 +69,10 @@ socket.on('game:syncState', (state) => {
     document.getElementById('explanation-box').style.display = 'flex';
   } else if (state.status === 'LEADERBOARD') {
     renderLeaderboard(state.leaderboard || [], state.currentQuestionIndex >= state.totalQuestions - 1);
+  } else if (state.status === 'FINAL_REVEAL') {
+    renderFinalReveal(state.leaderboard || [], state.finalRevealStep || 0, state.totalNonPodium || 0, false);
   } else if (state.status === 'PODIUM') {
-    renderPodium(state.leaderboard || []);
+    renderPodium(state.leaderboard || [], state.podiumStep || 0, false);
   }
 });
 
@@ -244,7 +247,7 @@ function renderLeaderboard(leaderboard, isLastQuestion) {
 
   const btnNext = document.getElementById('btn-next-question');
   if (isLastQuestion) {
-    btnNext.textContent = '🏆 VAI AL PODIO FINALE!';
+    btnNext.textContent = '🏆 CLASSIFICA FINALE ➡️';
   } else {
     btnNext.textContent = 'PROSSIMA DOMANDA ➡️';
   }
@@ -258,27 +261,191 @@ document.getElementById('btn-next-question').addEventListener('click', () => {
   socket.emit('admin:next');
 });
 
-// Podium Render Helper
-function renderPodium(leaderboard) {
+// Stato locale finale
+let currentFinaleState = {
+  leaderboard: [],
+  finalRevealStep: 0,
+  totalNonPodium: 0,
+  podiumStep: 0
+};
+
+// Svelamento Progressivo Classifica Finale (posizioni N down to 4)
+function renderFinalReveal(leaderboard, finalRevealStep, totalNonPodium, isLiveEvent = false) {
+  currentFinaleState.leaderboard = leaderboard || [];
+  currentFinaleState.finalRevealStep = finalRevealStep || 0;
+  currentFinaleState.totalNonPodium = totalNonPodium || 0;
+
+  showScreen('finalReveal');
+
+  const nonPodium = (leaderboard || []).slice(3);
+  const revealOrder = [...nonPodium].reverse();
+  const subEl = document.getElementById('finale-status-sub');
+  const actionBar = document.getElementById('finale-action-bar');
+  const grid = document.getElementById('final-reveal-grid');
+
+  if (grid) grid.innerHTML = '';
+
+  if (finalRevealStep === 0) {
+    if (subEl) subEl.textContent = 'Premi un tasto per iniziare lo svelamento delle posizioni...';
+    if (actionBar) actionBar.style.display = 'none';
+  } else if (finalRevealStep < totalNonPodium) {
+    const nextRank = revealOrder[finalRevealStep] ? revealOrder[finalRevealStep].rank : 4;
+    if (subEl) subEl.textContent = `Svelamento in corso... (${finalRevealStep}/${totalNonPodium}) • Prossima posizione: #${nextRank}`;
+    if (actionBar) actionBar.style.display = 'none';
+  } else {
+    if (subEl) subEl.textContent = '👑 Posizioni svelate! Pronti per il Podio dei Vincitori!';
+    if (actionBar) actionBar.style.display = 'flex';
+  }
+
+  const countToShow = Math.min(finalRevealStep, revealOrder.length);
+  for (let i = 0; i < countToShow; i++) {
+    const p = revealOrder[i];
+    const card = document.createElement('div');
+    card.className = 'final-reveal-card';
+    if (i === finalRevealStep - 1) {
+      card.classList.add('highlight');
+    }
+    const streakBadge = p.streak > 1 ? `<span class="streak-badge" style="font-size:0.85rem; padding:4px 8px;">🔥 x${p.streak}</span>` : '';
+    card.innerHTML = `
+      <div class="rank-badge">#${p.rank}</div>
+      <div class="avatar">${p.avatar}</div>
+      <div class="nick">${p.nickname}</div>
+      ${streakBadge}
+      <div class="score">${(p.score || 0).toLocaleString()} pt</div>
+    `;
+    if (grid) grid.appendChild(card);
+  }
+
+  if (isLiveEvent && finalRevealStep > 0) {
+    window.sounds.playReveal();
+  }
+}
+
+socket.on('game:finalReveal', ({ leaderboard, finalRevealStep, totalNonPodium }) => {
+  renderFinalReveal(leaderboard, finalRevealStep, totalNonPodium, true);
+});
+
+const btnFinaleToPodium = document.getElementById('btn-finale-to-podium');
+if (btnFinaleToPodium) {
+  btnFinaleToPodium.addEventListener('click', () => {
+    socket.emit('admin:advanceFinale');
+  });
+}
+
+// Podium Render Helper con svelamento a step (3°, poi 2°, poi 1°)
+function renderPodium(leaderboard, podiumStep = 0, isLiveEvent = false) {
+  currentFinaleState.leaderboard = leaderboard || [];
+  currentFinaleState.podiumStep = podiumStep;
+
   showScreen('podium');
+
   const p1 = (leaderboard || [])[0];
   const p2 = (leaderboard || [])[1];
   const p3 = (leaderboard || [])[2];
 
-  if (p1) {
-    document.getElementById('podium-avatar-1').textContent = p1.avatar || '🥇';
-    document.getElementById('podium-name-1').textContent = p1.nickname;
-    document.getElementById('podium-pts-1').textContent = `${(p1.score || 0).toLocaleString()} pt`;
+  const subEl = document.getElementById('podium-status-sub');
+  if (podiumStep === 0) {
+    if (subEl) subEl.textContent = 'In attesa di svelare il 3° Posto...';
+  } else if (podiumStep === 1) {
+    if (subEl) subEl.textContent = '🥉 3° Posto Svelato! In attesa del 2° Posto...';
+  } else if (podiumStep === 2) {
+    if (subEl) subEl.textContent = '🥈 2° Posto Svelato! In attesa del Vincitore Assoluto...';
+  } else {
+    if (subEl) subEl.textContent = '👑 ECCO I CAMPIONI ASSOLUTI DI UNIME LEVEL UP! 👑';
   }
-  if (p2) {
-    document.getElementById('podium-avatar-2').textContent = p2.avatar || '🥈';
-    document.getElementById('podium-name-2').textContent = p2.nickname;
-    document.getElementById('podium-pts-2').textContent = `${(p2.score || 0).toLocaleString()} pt`;
+
+  // 3° Posto (Bronzo)
+  const step3 = document.getElementById('podium-step-3');
+  const mystery3 = document.getElementById('podium-mystery-3');
+  const content3 = document.getElementById('podium-content-3');
+  if (podiumStep >= 1 && p3) {
+    if (mystery3) mystery3.style.display = 'none';
+    if (content3) content3.style.display = 'block';
+    if (step3) {
+      step3.classList.remove('mystery');
+      step3.classList.add('revealed');
+    }
+    const av3 = document.getElementById('podium-avatar-3');
+    const nm3 = document.getElementById('podium-name-3');
+    const pt3 = document.getElementById('podium-pts-3');
+    if (av3) av3.textContent = p3.avatar || '🥉';
+    if (nm3) nm3.textContent = p3.nickname;
+    if (pt3) pt3.textContent = `${(p3.score || 0).toLocaleString()} pt`;
+    if (isLiveEvent && podiumStep === 1) {
+      window.sounds.playBronze();
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 50, angle: 60, spread: 50, origin: { x: 0.8, y: 0.7 } });
+      }
+    }
+  } else {
+    if (mystery3) mystery3.style.display = 'flex';
+    if (content3) content3.style.display = 'none';
+    if (step3) {
+      step3.classList.add('mystery');
+      step3.classList.remove('revealed');
+    }
   }
-  if (p3) {
-    document.getElementById('podium-avatar-3').textContent = p3.avatar || '🥉';
-    document.getElementById('podium-name-3').textContent = p3.nickname;
-    document.getElementById('podium-pts-3').textContent = `${(p3.score || 0).toLocaleString()} pt`;
+
+  // 2° Posto (Argento)
+  const step2 = document.getElementById('podium-step-2');
+  const mystery2 = document.getElementById('podium-mystery-2');
+  const content2 = document.getElementById('podium-content-2');
+  if (podiumStep >= 2 && p2) {
+    if (mystery2) mystery2.style.display = 'none';
+    if (content2) content2.style.display = 'block';
+    if (step2) {
+      step2.classList.remove('mystery');
+      step2.classList.add('revealed');
+    }
+    const av2 = document.getElementById('podium-avatar-2');
+    const nm2 = document.getElementById('podium-name-2');
+    const pt2 = document.getElementById('podium-pts-2');
+    if (av2) av2.textContent = p2.avatar || '🥈';
+    if (nm2) nm2.textContent = p2.nickname;
+    if (pt2) pt2.textContent = `${(p2.score || 0).toLocaleString()} pt`;
+    if (isLiveEvent && podiumStep === 2) {
+      window.sounds.playSilver();
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 65, angle: 120, spread: 50, origin: { x: 0.2, y: 0.7 } });
+      }
+    }
+  } else {
+    if (mystery2) mystery2.style.display = 'flex';
+    if (content2) content2.style.display = 'none';
+    if (step2) {
+      step2.classList.add('mystery');
+      step2.classList.remove('revealed');
+    }
+  }
+
+  // 1° Posto (Oro - Vincitore)
+  const step1 = document.getElementById('podium-step-1');
+  const mystery1 = document.getElementById('podium-mystery-1');
+  const content1 = document.getElementById('podium-content-1');
+  if (podiumStep >= 3 && p1) {
+    if (mystery1) mystery1.style.display = 'none';
+    if (content1) content1.style.display = 'block';
+    if (step1) {
+      step1.classList.remove('mystery');
+      step1.classList.add('revealed');
+    }
+    const av1 = document.getElementById('podium-avatar-1');
+    const nm1 = document.getElementById('podium-name-1');
+    const pt1 = document.getElementById('podium-pts-1');
+    if (av1) av1.textContent = p1.avatar || '🥇';
+    if (nm1) nm1.textContent = p1.nickname;
+    if (pt1) pt1.textContent = `${(p1.score || 0).toLocaleString()} pt`;
+    if (isLiveEvent && podiumStep === 3) {
+      window.sounds.playPodiumFanfare();
+      fireConfetti();
+    }
+  } else {
+    if (mystery1) mystery1.style.display = 'flex';
+    if (content1) content1.style.display = 'none';
+    if (step1) {
+      step1.classList.add('mystery');
+      step1.classList.remove('revealed');
+    }
   }
 }
 
@@ -306,10 +473,8 @@ function fireConfetti() {
   }
 }
 
-socket.on('game:podium', ({ leaderboard }) => {
-  renderPodium(leaderboard);
-  window.sounds.playPodiumFanfare();
-  fireConfetti();
+socket.on('game:podium', ({ leaderboard, podiumStep }) => {
+  renderPodium(leaderboard, podiumStep, true);
 });
 
 document.getElementById('btn-confetti-more').addEventListener('click', () => {
@@ -356,6 +521,14 @@ window.addEventListener('keydown', (e) => {
       }
     } else if (screens.leaderboard.classList.contains('active')) {
       socket.emit('admin:next');
+    } else if (screens.finalReveal && screens.finalReveal.classList.contains('active')) {
+      socket.emit('admin:advanceFinale');
+    } else if (screens.podium && screens.podium.classList.contains('active')) {
+      if (currentFinaleState.podiumStep < 3) {
+        socket.emit('admin:advanceFinale');
+      } else {
+        fireConfetti();
+      }
     }
   }
 });
