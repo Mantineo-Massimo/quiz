@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniMe Quiz Night | Proiezione Maxischermo</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/host.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="host-container">
+    <!-- Header con Loghi Ufficiali -->
+    <header class="header-bar">
+      <div class="brand-logos">
+        <div class="logo-badge" title="Associazione Morgana">
+          <img src="/assets/Morgana.svg" alt="Associazione Morgana" onerror="this.src='/assets/Morgana.png'">
+          <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">MORGANA</span>
+        </div>
+        <div class="logo-badge" title="Associazione ORUM">
+          <img src="/assets/ORUM.svg" alt="Associazione ORUM" onerror="this.src='/assets/ORUM.png'">
+          <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">ORUM</span>
+        </div>
+      </div>
+
+      <div class="unime-header-title">
+        <img src="/assets/unime.svg" alt="Università degli Studi di Messina">
+      </div>
+
+      <div class="controls-right">
+        <button id="btn-sound" class="btn btn-glass btn-icon" title="Attiva/Disattiva Audio">🔊</button>
+        <button id="btn-fullscreen" class="btn btn-glass btn-icon" title="Schermo Intero (F11)">⛶</button>
+        <a href="/admin" target="_blank" class="btn btn-glass" style="font-size: 0.85rem; padding: 8px 14px;">⚙️ Regia</a>
+      </div>
+    </header>
+
+    <!-- 1. SCREEN LOBBY -->
+    <main id="screen-lobby" class="screen active">
+      <div class="lobby-grid">
+        <!-- Riquadro Istruzioni Ingresso & QR Code -->
+        <div class="lobby-join-card">
+          <h2 class="lobby-title">UNIME QUIZ NIGHT</h2>
+          <p class="lobby-subtitle">Morgana &amp; ORUM • Sfida tra Studenti</p>
+          
+          <div class="qr-frame">
+            <img id="qr-image" src="" alt="QR Code per Giocare">
+          </div>
+
+          <div id="join-url-text" class="join-url-pill">Caricamento link...</div>
+          <p class="join-instruction">📱 Inquadra il QR con la fotocamera per partecipare dal tuo smartphone!</p>
+        </div>
+
+        <!-- Riquadro Concorrenti Connessi -->
+        <div class="roster-card">
+          <div class="roster-header">
+            <div>
+              <h3 style="font-size: 1.6rem; font-weight: 800; color: #fff;">SALA D'ATTESA</h3>
+              <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem;">I concorrenti compariranno qui non appena entrano</p>
+            </div>
+            <div class="roster-count-badge">
+              <span>👥</span>
+              <span id="player-count-text">0 Giocatori</span>
+            </div>
+          </div>
+
+          <div id="players-grid" class="players-grid">
+            <!-- I tag dei giocatori vengono aggiunti dinamicamente -->
+          </div>
+
+          <div class="lobby-footer">
+            <button id="btn-start-quiz" class="btn btn-primary btn-start-giant">
+              🚀 INIZIA IL QUIZ (Spazio)
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 2. SCREEN COUNTDOWN -->
+    <main id="screen-countdown" class="screen">
+      <div class="countdown-label">PROSSIMA DOMANDA TRA</div>
+      <div id="countdown-number" class="countdown-giant">3</div>
+    </main>
+
+    <!-- 3. SCREEN QUESTION & ANSWER -->
+    <main id="screen-question" class="screen">
+      <div class="question-top-bar">
+        <div id="category-badge" class="category-tag">Categoria</div>
+        <div id="question-index-badge" class="question-counter">Domanda 1 di 15</div>
+      </div>
+
+      <div class="question-prompt-card">
+        <h1 id="question-text" class="question-text">Testo della domanda...</h1>
+      </div>
+
+      <div class="timer-row">
+        <div id="timer-display" class="timer-circle">20</div>
+        <div id="answers-badge" class="answers-received-badge">Risposte: 0 / 0</div>
+      </div>
+
+      <!-- 4 Opzioni -->
+      <div class="options-grid">
+        <div id="opt-0" class="option-card opt-0">
+          <div class="shape">▲</div>
+          <div id="opt-text-0" class="opt-text">Opzione A</div>
+          <div id="opt-stats-0" class="answer-stats-bar" style="display: none;">0</div>
+        </div>
+        <div id="opt-1" class="option-card opt-1">
+          <div class="shape">◆</div>
+          <div id="opt-text-1" class="opt-text">Opzione B</div>
+          <div id="opt-stats-1" class="answer-stats-bar" style="display: none;">0</div>
+        </div>
+        <div id="opt-2" class="option-card opt-2">
+          <div class="shape">●</div>
+          <div id="opt-text-2" class="opt-text">Opzione C</div>
+          <div id="opt-stats-2" class="answer-stats-bar" style="display: none;">0</div>
+        </div>
+        <div id="opt-3" class="option-card opt-3">
+          <div class="shape">■</div>
+          <div id="opt-text-3" class="opt-text">Opzione D</div>
+          <div id="opt-stats-3" class="answer-stats-bar" style="display: none;">0</div>
+        </div>
+      </div>
+
+      <!-- Spiegazione / Curiosità (Compare solo a risposta svelata) -->
+      <div id="explanation-box" class="explanation-card" style="display: none;">
+        <div class="explanation-icon">💡</div>
+        <div class="explanation-text">
+          <strong>CURIOSITÀ UNIME:</strong> <span id="explanation-text-content"></span>
+        </div>
+        <button id="btn-next-action" class="btn btn-primary" style="margin-left: auto; white-space: nowrap;">
+          Classifica ➡️ (Spazio)
+        </button>
+      </div>
+    </main>
+
+    <!-- 4. SCREEN LEADERBOARD -->
+    <main id="screen-leaderboard" class="screen">
+      <h2 class="leaderboard-title">🏆 CLASSIFICA PARZIALE</h2>
+      <div id="leaderboard-list" class="leaderboard-list">
+        <!-- Righe classifica generate via JS -->
+      </div>
+      <div style="display: flex; justify-content: center; margin-top: 36px;">
+        <button id="btn-next-question" class="btn btn-primary btn-start-giant">
+          PROSSIMA DOMANDA ➡️ (Spazio)
+        </button>
+      </div>
+    </main>
+
+    <!-- 5. SCREEN PODIUM -->
+    <main id="screen-podium" class="screen">
+      <h2 class="leaderboard-title" style="color: var(--unime-gold); font-size: 3.2rem;">
+        🎉 IL PODIO FINALE UNIME 🎉
+      </h2>
+      <p style="text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem; margin-top: -16px;">
+        Complimenti a tutti i partecipanti di Morgana &amp; ORUM!
+      </p>
+
+      <div class="podium-container">
+        <!-- 2° Posto -->
+        <div class="podium-step podium-2">
+          <div class="podium-player-card">
+            <span id="podium-avatar-2" class="avatar">🥈</span>
+            <div id="podium-name-2" class="name">---</div>
+            <div id="podium-pts-2" class="pts">0 pt</div>
+          </div>
+          <div class="podium-block">2</div>
+        </div>
+
+        <!-- 1° Posto -->
+        <div class="podium-step podium-1">
+          <div class="podium-player-card">
+            <span id="podium-avatar-1" class="avatar">🥇</span>
+            <div id="podium-name-1" class="name">---</div>
+            <div id="podium-pts-1" class="pts">0 pt</div>
+          </div>
+          <div class="podium-block">1</div>
+        </div>
+
+        <!-- 3° Posto -->
+        <div class="podium-step podium-3">
+          <div class="podium-player-card">
+            <span id="podium-avatar-3" class="avatar">🥉</span>
+            <div id="podium-name-3" class="name">---</div>
+            <div id="podium-pts-3" class="pts">0 pt</div>
+          </div>
+          <div class="podium-block">3</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; margin-top: 40px; gap: 16px;">
+        <button id="btn-restart-game" class="btn btn-glass">
+          🔄 Torna alla Sala d'Attesa
+        </button>
+        <button id="btn-confetti-more" class="btn btn-primary">
+          🎊 Più Coriandoli!
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/audio.js"></script>
+  <script src="/js/host.js"></script>
+</body>
+</html>

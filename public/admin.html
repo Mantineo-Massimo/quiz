@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regia &amp; Gestione | UniMe Quiz</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <img src="/assets/Morgana.svg" style="height: 36px;" onerror="this.src='/assets/Morgana.png'">
+        <img src="/assets/ORUM.svg" style="height: 36px;" onerror="this.src='/assets/ORUM.png'">
+        <div>
+          <h1 style="font-size: 1.5rem; font-weight: 800;">PANNELLO REGIA UNIME QUIZ</h1>
+          <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Morgana &amp; ORUM Management Console</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="/host" target="_blank" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+          🖥️ Apri Proiezione Host
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-tabs">
+      <button class="tab-btn active" data-tab="tab-control">🎮 Controllo Gioco</button>
+      <button class="tab-btn" data-tab="tab-players">👥 Giocatori Connessi (<span id="admin-player-count">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-questions">📝 Modifica Domande (<span id="admin-q-count">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-network">🌐 Rete &amp; QR Code</button>
+    </div>
+
+    <!-- TAB 1: CONTROLLO GIOCO -->
+    <div id="tab-control" class="admin-panel active">
+      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Comandi Partita Rapidi</h2>
+      <div class="control-btn-grid">
+        <button id="admin-btn-start" class="btn btn-primary">
+          🚀 Inizia Quiz da Zero
+        </button>
+        <button id="admin-btn-reveal" class="btn btn-glass" style="background: rgba(234, 179, 8, 0.2); border-color: #eab308;">
+          💡 Rivela Risposta Adesso
+        </button>
+        <button id="admin-btn-next" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+          ➡️ Prossimo Step (Classifica / Domanda)
+        </button>
+        <button id="admin-btn-podium" class="btn btn-glass" style="background: rgba(168, 85, 247, 0.2); border-color: #a855f7;">
+          🏆 Mostra Podio Finale
+        </button>
+        <button id="admin-btn-reset" class="btn btn-glass" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
+          🔄 Resetta alla Lobby
+        </button>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 18px; border-radius: 14px; border: 1px solid var(--border-glass);">
+        <h3 style="font-size: 1.1rem; color: var(--unime-gold); margin-bottom: 6px;">💡 Suggerimento per l'evento</h3>
+        <p style="color: rgba(255,255,255,0.8); line-height: 1.4; font-size: 0.95rem;">
+          Puoi proiettare lo schermo <strong>/host</strong> sul monitor o videoproiettore della sala (premi <strong>F11</strong> per lo schermo intero) e avanzare comodamente le domande usando la <strong>Barra Spaziatrice</strong> della tastiera del PC, oppure usando questo pannello dal tuo smartphone o dal computer!
+        </p>
+      </div>
+    </div>
+
+    <!-- TAB 2: GIOCATORI CONNESSI -->
+    <div id="tab-players" class="admin-panel">
+      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Gestione Partecipanti in Tempo Reale</h2>
+      <div id="admin-players-list" class="player-admin-list">
+        <!-- Generato via JS -->
+      </div>
+    </div>
+
+    <!-- TAB 3: MODIFICA DOMANDE -->
+    <div id="tab-questions" class="admin-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h2 style="font-size: 1.3rem;">Elenco Domande Attuali</h2>
+        <button id="btn-save-questions" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+          💾 Salva Modifiche
+        </button>
+      </div>
+      <div id="admin-questions-list">
+        <!-- Domande visualizzate -->
+      </div>
+    </div>
+
+    <!-- TAB 4: RETE & QR CODE -->
+    <div id="tab-network" class="admin-panel">
+      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Configurazione Indirizzo &amp; Rete Wi-Fi</h2>
+      <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 14px; border: 1px solid var(--border-glass); margin-bottom: 20px;">
+        <label style="display: block; font-weight: 700; margin-bottom: 8px;">URL di Gioco per i Partecipanti:</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="input-custom-url" class="input-nick" style="font-size: 1rem; padding: 10px 14px;" placeholder="http://192.168.1.xxx:3000">
+          <button id="btn-update-url" class="btn btn-primary" style="padding: 10px 20px;">Aggiorna</button>
+        </div>
+        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 8px;">
+          Questo indirizzo determina il link codificato all'interno del QR Code mostrato sullo schermo principale.
+        </p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 24px;">
+        <img id="admin-qr-preview" style="width: 180px; height: 180px; background: #fff; padding: 10px; border-radius: 14px;" src="" alt="QR Preview">
+        <div>
+          <h4 style="color: var(--unime-gold); margin-bottom: 6px;">Come connettere gli studenti:</h4>
+          <ol style="padding-left: 20px; color: rgba(255,255,255,0.85); line-height: 1.6; font-size: 0.95rem;">
+            <li>Assicurati che il PC e gli studenti siano connessi alla stessa rete Wi-Fi (o all'hotspot del tuo cellulare).</li>
+            <li>Inquadrano il QR code dal maxischermo col telefono.</li>
+            <li>Entrano all'istante senza installare nessuna app!</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

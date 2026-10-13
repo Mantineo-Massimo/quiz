@@ -1,0 +1,219 @@
+[
+  {
+    "id": 1,
+    "category": "Storia di UniMe",
+    "question": "In quale anno fu fondata ufficialmente l'Università degli Studi di Messina?",
+    "timeLimit": 20,
+    "options": [
+      "1548",
+      "1861",
+      "1908",
+      "1321"
+    ],
+    "correctIndex": 0,
+    "explanation": "UniMe fu fondata nel 1548 da Sant'Ignazio di Loyola con la bolla papale 'Copiosus in misericordia Dominus' di Papa Paolo III, diventando il primo collegio gesuitico al mondo!"
+  },
+  {
+    "id": 2,
+    "category": "Campus & Poli",
+    "question": "In quale polo universitario si trova la facoltà di Ingegneria e Scienze?",
+    "timeLimit": 20,
+    "options": [
+      "Polo Centrale",
+      "Polo Annunziata",
+      "Polo Papardo",
+      "Polo Policlinico"
+    ],
+    "correctIndex": 2,
+    "explanation": "Il Polo Papardo ospita i dipartimenti di Ingegneria, Scienze Matematiche, Informatiche, Fisiche e della Terra, affacciato sui laghi di Ganzirri."
+  },
+  {
+    "id": 3,
+    "category": "Vita da Fuorisede",
+    "question": "Qual è il comfort food messinese d'obbligo dopo aver superato un esame tosto?",
+    "timeLimit": 20,
+    "options": [
+      "Pitone fritto tradizionale",
+      "Kebab con patatine",
+      "Cornetto vegano",
+      "Insalatina scondita"
+    ],
+    "correctIndex": 0,
+    "explanation": "Il pitone messinese (con scarola, tuma, pomodoro e acciughe) è il rito sacro di celebrazione per ogni studente di UniMe!"
+  },
+  {
+    "id": 4,
+    "category": "Miti & Stretto",
+    "question": "A quale fenomeno ottico dello Stretto di Messina si ispira il nome dell'Associazione Morgana?",
+    "timeLimit": 20,
+    "options": [
+      "Aurora Boreale",
+      "Fata Morgana (miraggio superiore)",
+      "Vortice di Cariddi",
+      "Faro di Capo Peloro"
+    ],
+    "correctIndex": 1,
+    "explanation": "La Fata Morgana è un celebre miraggio che fa apparire la costa calabrese fluttuante e vicinissima sulle acque dello Stretto di Messina!"
+  },
+  {
+    "id": 5,
+    "category": "UniMe & Luoghi",
+    "question": "Dove si trova la sede storica del Rettorato di UniMe?",
+    "timeLimit": 20,
+    "options": [
+      "Piazza Duomo",
+      "Piazza Salvatore Pugliatti",
+      "Viale Annunziata",
+      "Piazza Cairoli"
+    ],
+    "correctIndex": 1,
+    "explanation": "Il Rettorato ha sede nel Palazzo Universitario di Piazza Salvatore Pugliatti, accanto alla Corte d'Appello e al Dipartimento di Giurisprudenza."
+  },
+  {
+    "id": 6,
+    "category": "Associazionismo Studentesco",
+    "question": "Chi sono le associazioni studentesche che organizzano questa serata quiz?",
+    "timeLimit": 20,
+    "options": [
+      "Morgana e ORUM",
+      "Pegaso e Fenice",
+      "Hermes e Athena",
+      "Ulisse e Poseidon"
+    ],
+    "correctIndex": 0,
+    "explanation": "Associazione Morgana e ORUM uniscono le forze per la rappresentanza e la vita studentesca a UniMe!"
+  },
+  {
+    "id": 7,
+    "category": "Didattica & Carriera",
+    "question": "A quante ore di lavoro complessivo per lo studente corrisponde generalmente 1 CFU?",
+    "timeLimit": 20,
+    "options": [
+      "10 ore",
+      "25 ore",
+      "50 ore",
+      "100 ore"
+    ],
+    "correctIndex": 1,
+    "explanation": "1 Credito Formativo Universitario (CFU) corrisponde convenzionalmente a 25 ore di impegno totale (lezioni frontali + studio individuale)."
+  },
+  {
+    "id": 8,
+    "category": "Campus & Poli",
+    "question": "Dove si trova la Cittadella Sportiva Universitaria (CUS Messina) con piscina e campi?",
+    "timeLimit": 20,
+    "options": [
+      "Polo Annunziata",
+      "Polo Papardo",
+      "Polo Centrale",
+      "Mortelle"
+    ],
+    "correctIndex": 2,
+    "options": [
+      "Polo Papardo",
+      "Polo Annunziata",
+      "Polo Policlinico",
+      "Piazza Castronovo"
+    ],
+    "correctIndex": 1,
+    "explanation": "La grande Cittadella Sportiva Universitaria sorge all'Annunziata, dotata di piscina olimpionica, campi da tennis, calcio e palazzetti!"
+  },
+  {
+    "id": 9,
+    "category": "Trasporti a Messina",
+    "question": "Quale linea di autobus/shuttle ATM collega velocemente il centro con i Poli Papardo e Annunziata?",
+    "timeLimit": 20,
+    "options": [
+      "Linea Shuttle 100",
+      "Linea 1 Express",
+      "Linea Notturna 99",
+      "Tram 4"
+    ],
+    "correctIndex": 0,
+    "explanation": "La Linea Shuttle 100 è l'arteria fondamentale dei trasporti ATM che connette i principali poli universitari da Nord a Sud."
+  },
+  {
+    "id": 10,
+    "category": "Campus & Poli",
+    "question": "A quale celebre medico e statistico messinese è intitolato il Policlinico Universitario?",
+    "timeLimit": 20,
+    "options": [
+      "Gaetano Martino",
+      "Salvatore Pugliatti",
+      "Giorgio La Pira",
+      "Antonello da Messina"
+    ],
+    "correctIndex": 0,
+    "explanation": "L'AOU Policlinico di Messina è intitolata a Gaetano Martino, illustre fisiologo, accademico e Ministro degli Esteri (tra i padri fondatori dei Trattati di Roma)."
+  },
+  {
+    "id": 11,
+    "category": "Servizi agli Studenti",
+    "question": "Quale ente regionale gestisce le borse di studio, gli alloggi e le mense per gli studenti di UniMe?",
+    "timeLimit": 20,
+    "options": [
+      "ERSU Messina",
+      "CUS Messina",
+      "INPS Giovani",
+      "ADISU Nazionale"
+    ],
+    "correctIndex": 0,
+    "explanation": "L'ERSU (Ente Regionale per il Diritto allo Studio Universitario) di Messina eroga borse di studio, posti alloggio e servizio ristorazione per gli iscritti UniMe."
+  },
+  {
+    "id": 12,
+    "category": "Leggende Universitarie",
+    "question": "Secondo una celebre scaramanzia studentesca a Piazza Pugliatti, cosa NON dovresti fare prima di laurearti?",
+    "timeLimit": 20,
+    "options": [
+      "Salire la scalinata centrale guardando indietro",
+      "Camminare sulle aiuole del Rettorato",
+      "Toccare il leone della fontana",
+      "Scattare una foto con la corona d'alloro prima dell'esame"
+    ],
+    "correctIndex": 3,
+    "explanation": "Indossare o farsi foto con la corona d'alloro prima della proclamazione porta notoriamente una sfortuna colossale in tutta la comunità studentesca!"
+  },
+  {
+    "id": 13,
+    "category": "Associazionismo & Eventi",
+    "question": "Qual è il principale obiettivo delle associazioni universitarie come Morgana e ORUM?",
+    "timeLimit": 20,
+    "options": [
+      "Rappresentare gli studenti negli organi di ateneo e animare la vita universitaria",
+      "Vendere dispense a caro prezzo",
+      "Interrogare i docenti a fine corso",
+      "Stabilire le date degli appelli senza i professori"
+    ],
+    "correctIndex": 0,
+    "explanation": "Morgana e ORUM tutelano i diritti degli studenti, li rappresentano in Senato, CdA e dipartimenti, organizzando al contempo eventi culturali, formativi e di aggregazione!"
+  },
+  {
+    "id": 14,
+    "category": "UniMe nel Mondo",
+    "question": "Qual è il nome del programma europeo di mobilità per studiare un semestre all'estero con UniMe?",
+    "timeLimit": 20,
+    "options": [
+      "Erasmus+ (Studio & Traineeship)",
+      "Interrail Pass",
+      "Marco Polo Fellowship",
+      "Grand Tour Europe"
+    ],
+    "correctIndex": 0,
+    "explanation": "Con il programma Erasmus+, centinaia di studenti UniMe partono ogni anno per università partner in tutta Europa e oltre!"
+  },
+  {
+    "id": 15,
+    "category": "Gran Finale UniMe",
+    "question": "Qual è il colore accademico tradizionalmente associato alla toga dell'Ateneo di Messina?",
+    "timeLimit": 20,
+    "options": [
+      "Blu e Oro",
+      "Fucsia e Grigio",
+      "Verde fluo e Nero",
+      "Arancione e Viola"
+    ],
+    "correctIndex": 0,
+    "explanation": "Il Blu d'Ateneo e l'Oro sono i colori araldici storici di UniMe e della città dello Stretto!"
+  }
+]
