@@ -1,6 +1,6 @@
 # 🎯 UniMe Level Up: L'interactive info show per le matricole
 
-Lo show quiz interattivo in stile Dr. Why per le matricole dell'**Università degli Studi di Messina (UniMe)**, organizzato dalle associazioni universitarie **Morgana** e **O.R.U.M.**.
+Lo show quiz interattivo per le matricole dell'**Università degli Studi di Messina (UniMe)**, organizzato dalle associazioni universitarie **Morgana** e **O.R.U.M.**.
 
 Permette a un pubblico da **5 a 50+ spettatori** di partecipare in tempo reale rispondendo dal proprio smartphone inquadrando semplicemente un QR code proiettato sullo schermo.
 

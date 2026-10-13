@@ -45,7 +45,7 @@ function getLocalIpAddresses() {
 const db = require('./database');
 const gameState = db.state;
 
-// Calcolo Punti basato su correttezza, velocità e streak (stile Dr. Why)
+// Calcolo Punti basato su correttezza, velocità e serie (streak)
 function calculateScore(timeRemaining, timeLimit, isCorrect, streak) {
   if (!isCorrect) return 0;
   const ratio = Math.max(0, Math.min(1, timeRemaining / timeLimit));

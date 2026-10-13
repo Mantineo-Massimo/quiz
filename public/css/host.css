@@ -1,4 +1,4 @@
-/* Host Screen (Maxischermo Dr. Why / Morgana & ORUM) */
+/* Host Screen (Maxischermo UniMe Level Up / Morgana & ORUM) */
 .host-container {
   display: flex;
   flex-direction: column;
@@ -116,7 +116,7 @@
   padding: 32px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-drwhy);
+  box-shadow: var(--shadow-arcade);
   height: calc(100vh - 220px);
 }
 
@@ -184,7 +184,7 @@
   letter-spacing: 1px;
 }
 
-/* 2. COUNTDOWN SCREEN (Dr. Why Intro) */
+/* 2. COUNTDOWN SCREEN (Intro) */
 #screen-countdown {
   align-items: center;
   justify-content: center;
@@ -198,7 +198,7 @@
   color: var(--morgana-red);
   text-shadow: 0 0 80px rgba(193, 41, 47, 0.85), 0 0 30px #fff;
   line-height: 1;
-  animation: drwhyPulse 1s infinite alternate;
+  animation: arenaPulse 1s infinite alternate;
 }
 
 .countdown-label {
@@ -210,12 +210,12 @@
   text-transform: uppercase;
 }
 
-@keyframes drwhyPulse {
+@keyframes arenaPulse {
   0% { transform: scale(1); filter: brightness(1); }
   100% { transform: scale(1.06); filter: brightness(1.3); }
 }
 
-/* 3. QUESTION SCREEN (Dr. Why Live Arena) */
+/* 3. QUESTION SCREEN (Live Arena) */
 .question-top-bar {
   display: flex;
   justify-content: space-between;
@@ -283,7 +283,7 @@
   letter-spacing: 0.2px;
 }
 
-/* Timer Dr. Why & Indicatori */
+/* Timer & Indicatori */
 .timer-row {
   display: flex;
   align-items: center;
@@ -312,7 +312,7 @@
   border-color: #ef4444;
   color: #ef4444;
   box-shadow: 0 0 35px rgba(239, 68, 68, 0.8);
-  animation: drwhyPulse 0.45s infinite alternate;
+  animation: arenaPulse 0.45s infinite alternate;
 }
 
 .answers-received-badge {
@@ -326,7 +326,7 @@
   color: #f1f5f9;
 }
 
-/* 4 Dr. Why Answer Plates */
+/* 4 Piastre Risposta */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -389,7 +389,7 @@
   line-height: 1.25;
 }
 
-/* Svelamento Risposta Dr. Why */
+/* Svelamento Risposta */
 .option-card.dimmed {
   opacity: 0.2;
   filter: grayscale(85%);
@@ -450,7 +450,7 @@
   font-weight: 900;
 }
 
-/* 4. LEADERBOARD SCREEN (Tabellone Dr. Why) */
+/* 4. LEADERBOARD SCREEN (Tabellone Punti) */
 .leaderboard-title {
   text-align: center;
   font-family: var(--font-display);

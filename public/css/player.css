@@ -1,4 +1,4 @@
-/* Mobile-first: Telecomando / Pulsantiera Dr. Why */
+/* Mobile-first: Telecomando / Pulsantiera Mobile */
 html, body {
   height: 100%;
   height: 100dvh;
@@ -175,7 +175,7 @@ html, body {
   border: 1px solid var(--brand-card-border);
   border-radius: 24px;
   padding: 24px;
-  box-shadow: var(--shadow-drwhy);
+  box-shadow: var(--shadow-arcade);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -290,7 +290,7 @@ html, body {
   line-height: 1.4;
 }
 
-/* 3. QUESTION VIEW (PULSANTIERA DR. WHY) */
+/* 3. QUESTION VIEW (PULSANTIERA 4 TASTI) */
 #view-question {
   display: none;
   flex-direction: column;
@@ -314,8 +314,8 @@ html, body {
   padding-bottom: 6px;
 }
 
-/* Pulsanti 3D con effetto pressione Dr. Why */
-.drwhy-pad-btn {
+/* Pulsanti 3D con effetto pressione */
+.arcade-pad-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -338,25 +338,25 @@ html, body {
   min-height: 0;
 }
 
-.drwhy-pad-btn:active {
+.arcade-pad-btn:active {
   transform: translateY(8px);
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4);
   filter: brightness(1.25);
 }
 
-.drwhy-pad-btn.btn-0 { 
+.arcade-pad-btn.btn-0 { 
   background: linear-gradient(180deg, #f43f5e 0%, #be123c 100%);
   border-top: 2px solid #fda4af;
 }
-.drwhy-pad-btn.btn-1 { 
+.arcade-pad-btn.btn-1 { 
   background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
   border-top: 2px solid #93c5fd;
 }
-.drwhy-pad-btn.btn-2 { 
+.arcade-pad-btn.btn-2 { 
   background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
   border-top: 2px solid #fde68a;
 }
-.drwhy-pad-btn.btn-3 { 
+.arcade-pad-btn.btn-3 { 
   background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
   border-top: 2px solid #86efac;
 }

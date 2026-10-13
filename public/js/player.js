@@ -269,8 +269,8 @@ socket.on('game:questionStarted', (data) => {
   }
 });
 
-// Option Click (Dr. Why pad buttons)
-const padButtons = document.querySelectorAll('.drwhy-pad-btn');
+// Option Click (Pulsanti risposta arcade)
+const padButtons = document.querySelectorAll('.arcade-pad-btn');
 padButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     if (answerSubmitted) return;
@@ -337,7 +337,7 @@ socket.on('game:countdown', () => {
   if (!isJoined) return;
   showView('waiting');
   document.getElementById('my-nick-display').textContent = 'Dita sui pulsanti!';
-  document.querySelector('.waiting-sub').textContent = 'La prossima domanda del Dr. Why sta per partire...';
+  document.querySelector('.waiting-sub').textContent = 'La prossima domanda sta per partire...';
 });
 
 // Podium / Game Over
@@ -361,7 +361,7 @@ socket.on('game:resetToLobby', () => {
   if (isJoined) {
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Nuova Partita!';
-    document.querySelector('.waiting-sub').textContent = 'In attesa dell\'avvio del Dr. Why...';
+    document.querySelector('.waiting-sub').textContent = 'In attesa dell\'avvio del quiz show...';
   } else {
     showView('join');
   }
