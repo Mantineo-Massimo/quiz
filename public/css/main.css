@@ -1,42 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap');
 
 :root {
-  /* Brand Palette */
-  --unime-blue: #092040;
-  --unime-blue-light: #123769;
-  --unime-gold: #f5b324;
-  --unime-gold-light: #ffd466;
+  /* Brand Palette da www.morganaorum.it */
+  --brand-navy: #090e1a;
+  --brand-navy-light: #10182b;
+  --brand-card: rgba(16, 24, 43, 0.92);
+  --brand-card-border: rgba(255, 255, 255, 0.12);
   
   --morgana-red: #c1292f;
-  --morgana-red-glow: rgba(193, 41, 47, 0.45);
+  --morgana-red-dark: #8c1a1f;
+  --morgana-red-glow: rgba(193, 41, 47, 0.55);
   
   --orum-green: #26602c;
   --orum-dark: #19172e;
   
-  /* Background Dark Theme */
-  --bg-dark: #070d18;
-  --bg-card: rgba(16, 28, 50, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.12);
-  
-  /* Kahoot Answer Colors (Enhanced Neon Aesthetics) */
-  --ans-red: #e21b3c;
-  --ans-red-hover: #ff2a4e;
-  --ans-blue: #1368ce;
-  --ans-blue-hover: #1e7eff;
-  --ans-yellow: #d89e00;
-  --ans-yellow-hover: #ffbf00;
-  --ans-green: #26890c;
-  --ans-green-hover: #32ab12;
+  --accent-gold: #f59e0b;
+  --accent-gold-glow: rgba(245, 158, 11, 0.5);
+
+  /* Dr. Why 4-Button Arcade Colors */
+  --drwhy-red: #e11d48;
+  --drwhy-blue: #2563eb;
+  --drwhy-yellow: #d97706;
+  --drwhy-green: #16a34a;
 
   /* Typography */
   --font-display: 'Outfit', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
   
-  /* Shadows & Glow */
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
-  --shadow-glow-gold: 0 0 30px rgba(245, 179, 36, 0.35);
-  --shadow-glow-blue: 0 0 35px rgba(18, 55, 105, 0.5);
+  /* Shadows */
+  --shadow-drwhy: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-glow-red: 0 0 30px rgba(193, 41, 47, 0.45);
 }
 
 * {
@@ -48,14 +42,14 @@
 
 body {
   font-family: var(--font-body);
-  background: radial-gradient(circle at 50% 15%, #0f2444 0%, #08111f 60%, #040810 100%);
+  background: #070b14;
   color: #f8fafc;
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
 }
 
-/* Dynamic background grid & glowing orbs */
+/* Background con gradiente Morgana/ORUM e texture Dr. Why */
 body::before {
   content: '';
   position: fixed;
@@ -63,16 +57,30 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-image: 
-    radial-gradient(rgba(245, 179, 36, 0.08) 1px, transparent 1px),
-    radial-gradient(rgba(19, 104, 206, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
+  background: 
+    radial-gradient(circle at 10% 15%, rgba(193, 41, 47, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 90% 85%, rgba(37, 99, 235, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, #0c1322 0%, #060911 100%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Header with Logos */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header Ufficiale stile www.morganaorum.it */
 .header-bar {
   position: relative;
   z-index: 10;
@@ -80,85 +88,119 @@ body::before {
   align-items: center;
   justify-content: space-between;
   padding: 12px 28px;
-  background: rgba(8, 17, 31, 0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-glass);
+  background: rgba(9, 14, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 2px solid rgba(193, 41, 47, 0.5);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
 }
 
-.brand-logos {
+.brand-banner-pill {
   display: flex;
   align-items: center;
-  gap: 18px;
-}
-
-.logo-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-glass);
-  padding: 6px 14px;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(193, 41, 47, 0.25) 0%, rgba(16, 24, 43, 0.9) 100%);
+  border: 1px solid rgba(193, 41, 47, 0.4);
+  padding: 8px 22px;
   border-radius: 999px;
-  border: 1px solid var(--border-glass);
-  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-.logo-badge:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-.logo-badge img {
-  height: 38px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
-}
-
-.unime-header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.unime-header-title img {
-  height: 48px;
-  width: auto;
-}
-
-.controls-right {
+.logos-cluster {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* Glass Buttons */
+.logos-cluster img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+}
+
+.brand-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title-main {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.brand-sub-main {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  color: #cbd5e1;
+  text-transform: uppercase;
+}
+
+.drwhy-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.drwhy-badge .live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: liveBlink 1.2s infinite;
+}
+
+@keyframes liveBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Pulsanti stile Dr. Why */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1rem;
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
   outline: none;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--unime-gold) 0%, #e59b12 100%);
-  color: #071326;
-  box-shadow: 0 4px 18px rgba(245, 179, 36, 0.35);
+  background: linear-gradient(135deg, var(--morgana-red) 0%, #991b1b 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px var(--morgana-red-glow);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(245, 179, 36, 0.5);
-  background: linear-gradient(135deg, var(--unime-gold-light) 0%, #f5b324 100%);
+  background: linear-gradient(135deg, #e11d48 0%, var(--morgana-red) 100%);
+  box-shadow: 0 8px 25px rgba(225, 29, 72, 0.6);
 }
 
 .btn-primary:active {
@@ -166,15 +208,14 @@ body::before {
 }
 
 .btn-glass {
-  background: var(--bg-glass);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border: 1px solid var(--border-glass);
+  border: 1px solid var(--brand-card-border);
 }
 
 .btn-glass:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .btn-icon {
@@ -182,29 +223,4 @@ body::before {
   height: 44px;
   padding: 0;
   border-radius: 50%;
-}
-
-/* Animations */
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.05); opacity: 1; }
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.7); opacity: 0; }
-  80% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes slideUp {
-  0% { transform: translateY(30px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
-
-.animate-pop {
-  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.animate-slide {
-  animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

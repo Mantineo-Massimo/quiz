@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UniMe Quiz Night | Proiezione Maxischermo</title>
+  <title>Dr. Why UniMe | Morgana &amp; O.R.U.M.</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/host.css">
   <script src="/socket.io/socket.io.js"></script>
@@ -13,66 +13,77 @@
   <canvas id="confetti-canvas"></canvas>
 
   <div class="host-container">
-    <!-- Header con Loghi Ufficiali -->
+    <!-- Header Ufficiale Morgana & O.R.U.M. -->
     <header class="header-bar">
-      <div class="brand-logos">
-        <div class="logo-badge" title="Associazione Morgana">
-          <img src="/assets/Morgana.svg" alt="Associazione Morgana" onerror="this.src='/assets/Morgana.png'">
-          <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">MORGANA</span>
+      <div class="brand-banner-pill">
+        <div class="logos-cluster">
+          <img src="/assets/Morgana.svg" alt="Morgana" onerror="this.src='/assets/Morgana.png'">
+          <img src="/assets/ORUM.svg" alt="O.R.U.M." onerror="this.src='/assets/ORUM.png'">
         </div>
-        <div class="logo-badge" title="Associazione ORUM">
-          <img src="/assets/ORUM.svg" alt="Associazione ORUM" onerror="this.src='/assets/ORUM.png'">
-          <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">ORUM</span>
+        <div class="brand-text-block">
+          <span class="brand-title-main">MORGANA &amp; O.R.U.M.</span>
+          <span class="brand-sub-main">ASSOCIAZIONI UNIVERSITARIE • UNIME</span>
         </div>
       </div>
 
-      <div class="unime-header-title">
-        <img src="/assets/unime.svg" alt="Università degli Studi di Messina">
+      <div class="drwhy-badge">
+        <span class="live-dot"></span>
+        <span>DR. WHY LIVE ARENA</span>
       </div>
 
-      <div class="controls-right">
-        <button id="btn-sound" class="btn btn-glass btn-icon" title="Attiva/Disattiva Audio">🔊</button>
-        <button id="btn-fullscreen" class="btn btn-glass btn-icon" title="Schermo Intero (F11)">⛶</button>
-        <a href="/admin" target="_blank" class="btn btn-glass" style="font-size: 0.85rem; padding: 8px 14px;">⚙️ Regia</a>
+      <div class="controls-right" style="display: flex; gap: 10px;">
+        <button id="btn-sound" class="btn btn-glass btn-icon" title="Audio">🔊</button>
+        <button id="btn-fullscreen" class="btn btn-glass btn-icon" title="Schermo Intero">⛶</button>
+        <a href="/admin" target="_blank" class="btn btn-glass" style="font-size: 0.85rem; padding: 8px 16px;">⚙️ Regia</a>
       </div>
     </header>
 
     <!-- 1. SCREEN LOBBY -->
     <main id="screen-lobby" class="screen active">
+      <div class="lobby-hero-banner">
+        <h1 class="lobby-hero-motto">Sempre dalla parte dello studente!</h1>
+        <p class="lobby-hero-sub">
+          Passione, competenza e visione: il grande quiz show live per sfidarsi su UniMe e vincere la serata!
+        </p>
+      </div>
+
       <div class="lobby-grid">
-        <!-- Riquadro Istruzioni Ingresso & QR Code -->
+        <!-- Riquadro QR Code Dr. Why -->
         <div class="lobby-join-card">
-          <h2 class="lobby-title">UNIME QUIZ NIGHT</h2>
-          <p class="lobby-subtitle">Morgana &amp; ORUM • Sfida tra Studenti</p>
+          <div style="font-family: var(--font-mono); color: var(--accent-gold); font-weight: 700; margin-bottom: 8px; letter-spacing: 1.5px;">
+            ✦ COLLEGATI CON LO SMARTPHONE ✦
+          </div>
           
           <div class="qr-frame">
             <img id="qr-image" src="" alt="QR Code per Giocare">
           </div>
 
           <div id="join-url-text" class="join-url-pill">Caricamento link...</div>
-          <p class="join-instruction">📱 Inquadra il QR con la fotocamera per partecipare dal tuo smartphone!</p>
+          <p class="join-instruction">📷 Inquadra il QR con la fotocamera senza scaricare nessuna app!</p>
         </div>
 
         <!-- Riquadro Concorrenti Connessi -->
         <div class="roster-card">
           <div class="roster-header">
             <div>
-              <h3 style="font-size: 1.6rem; font-weight: 800; color: #fff;">SALA D'ATTESA</h3>
-              <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem;">I concorrenti compariranno qui non appena entrano</p>
+              <h3 style="font-size: 1.6rem; font-weight: 900; color: #fff; letter-spacing: 0.5px;">
+                PULSANTIERE COLLEGATE
+              </h3>
+              <p style="color: #94a3b8; font-size: 0.95rem;">I partecipanti compaiono qui in tempo reale</p>
             </div>
             <div class="roster-count-badge">
-              <span>👥</span>
+              <span>⚡</span>
               <span id="player-count-text">0 Giocatori</span>
             </div>
           </div>
 
           <div id="players-grid" class="players-grid">
-            <!-- I tag dei giocatori vengono aggiunti dinamicamente -->
+            <!-- Tag giocatori -->
           </div>
 
           <div class="lobby-footer">
             <button id="btn-start-quiz" class="btn btn-primary btn-start-giant">
-              🚀 INIZIA IL QUIZ (Spazio)
+              🚀 AVVIA IL DR. WHY (Spazio)
             </button>
           </div>
         </div>
@@ -81,7 +92,7 @@
 
     <!-- 2. SCREEN COUNTDOWN -->
     <main id="screen-countdown" class="screen">
-      <div class="countdown-label">PROSSIMA DOMANDA TRA</div>
+      <div class="countdown-label">DOMANDA IN ARRIVO TRA</div>
       <div id="countdown-number" class="countdown-giant">3</div>
     </main>
 
@@ -89,7 +100,7 @@
     <main id="screen-question" class="screen">
       <div class="question-top-bar">
         <div id="category-badge" class="category-tag">Categoria</div>
-        <div id="question-index-badge" class="question-counter">Domanda 1 di 15</div>
+        <div id="question-index-badge" class="question-counter">DOMANDA 1 / 15</div>
       </div>
 
       <div class="question-prompt-card">
@@ -98,50 +109,50 @@
 
       <div class="timer-row">
         <div id="timer-display" class="timer-circle">20</div>
-        <div id="answers-badge" class="answers-received-badge">Risposte: 0 / 0</div>
+        <div id="answers-badge" class="answers-received-badge">Pulsantiere: 0 / 0</div>
       </div>
 
-      <!-- 4 Opzioni -->
+      <!-- 4 Opzioni Dr. Why (1 Rosso, 2 Blu, 3 Giallo, 4 Verde) -->
       <div class="options-grid">
         <div id="opt-0" class="option-card opt-0">
-          <div class="shape">▲</div>
-          <div id="opt-text-0" class="opt-text">Opzione A</div>
+          <div class="shape">1</div>
+          <div id="opt-text-0" class="opt-text">Opzione 1</div>
           <div id="opt-stats-0" class="answer-stats-bar" style="display: none;">0</div>
         </div>
         <div id="opt-1" class="option-card opt-1">
-          <div class="shape">◆</div>
-          <div id="opt-text-1" class="opt-text">Opzione B</div>
+          <div class="shape">2</div>
+          <div id="opt-text-1" class="opt-text">Opzione 2</div>
           <div id="opt-stats-1" class="answer-stats-bar" style="display: none;">0</div>
         </div>
         <div id="opt-2" class="option-card opt-2">
-          <div class="shape">●</div>
-          <div id="opt-text-2" class="opt-text">Opzione C</div>
+          <div class="shape">3</div>
+          <div id="opt-text-2" class="opt-text">Opzione 3</div>
           <div id="opt-stats-2" class="answer-stats-bar" style="display: none;">0</div>
         </div>
         <div id="opt-3" class="option-card opt-3">
-          <div class="shape">■</div>
-          <div id="opt-text-3" class="opt-text">Opzione D</div>
+          <div class="shape">4</div>
+          <div id="opt-text-3" class="opt-text">Opzione 4</div>
           <div id="opt-stats-3" class="answer-stats-bar" style="display: none;">0</div>
         </div>
       </div>
 
-      <!-- Spiegazione / Curiosità (Compare solo a risposta svelata) -->
+      <!-- Spiegazione / Curiosità -->
       <div id="explanation-box" class="explanation-card" style="display: none;">
         <div class="explanation-icon">💡</div>
         <div class="explanation-text">
           <strong>CURIOSITÀ UNIME:</strong> <span id="explanation-text-content"></span>
         </div>
         <button id="btn-next-action" class="btn btn-primary" style="margin-left: auto; white-space: nowrap;">
-          Classifica ➡️ (Spazio)
+          Tabellone ➡️ (Spazio)
         </button>
       </div>
     </main>
 
-    <!-- 4. SCREEN LEADERBOARD -->
+    <!-- 4. SCREEN LEADERBOARD (Tabellone Punti Dr. Why) -->
     <main id="screen-leaderboard" class="screen">
-      <h2 class="leaderboard-title">🏆 CLASSIFICA PARZIALE</h2>
+      <h2 class="leaderboard-title">📊 TABELLONE PUNTI LIVE</h2>
       <div id="leaderboard-list" class="leaderboard-list">
-        <!-- Righe classifica generate via JS -->
+        <!-- Righe classifica -->
       </div>
       <div style="display: flex; justify-content: center; margin-top: 36px;">
         <button id="btn-next-question" class="btn btn-primary btn-start-giant">
@@ -152,11 +163,11 @@
 
     <!-- 5. SCREEN PODIUM -->
     <main id="screen-podium" class="screen">
-      <h2 class="leaderboard-title" style="color: var(--unime-gold); font-size: 3.2rem;">
-        🎉 IL PODIO FINALE UNIME 🎉
+      <h2 class="leaderboard-title" style="color: var(--accent-gold); font-size: 3.4rem;">
+        🏆 I CAMPIONI DELLA SERATA 🏆
       </h2>
-      <p style="text-align: center; color: rgba(255,255,255,0.8); font-size: 1.2rem; margin-top: -16px;">
-        Complimenti a tutti i partecipanti di Morgana &amp; ORUM!
+      <p style="text-align: center; color: #cbd5e1; font-size: 1.25rem; margin-top: -16px;">
+        MORGANA &amp; O.R.U.M. ringraziano tutti gli studenti UniMe per la partecipazione!
       </p>
 
       <div class="podium-container">
@@ -193,10 +204,10 @@
 
       <div style="display: flex; justify-content: center; margin-top: 40px; gap: 16px;">
         <button id="btn-restart-game" class="btn btn-glass">
-          🔄 Torna alla Sala d'Attesa
+          🔄 Nuova Partita
         </button>
         <button id="btn-confetti-more" class="btn btn-primary">
-          🎊 Più Coriandoli!
+          🎊 Coriandoli!
         </button>
       </div>
     </main>

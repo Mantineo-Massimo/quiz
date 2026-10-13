@@ -30,7 +30,7 @@ avatarBtns.forEach(btn => {
     avatarBtns.forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedAvatar = btn.getAttribute('data-avatar');
-    if (navigator.vibrate) navigator.vibrate(15);
+    if (navigator.vibrate) navigator.vibrate(20);
   });
 });
 
@@ -78,8 +78,18 @@ function handleJoin() {
 
 socket.on('player:joined', ({ nickname, avatar, status }) => {
   isJoined = true;
+
+  // Mostra display LCD della pulsantiera
+  const lcdDisplay = document.getElementById('lcd-display');
+  if (lcdDisplay) {
+    lcdDisplay.style.display = 'flex';
+    document.getElementById('lcd-nickname').textContent = nickname;
+    document.getElementById('lcd-avatar').textContent = avatar;
+    document.getElementById('lcd-score-num').textContent = '0';
+  }
+
   document.getElementById('my-avatar-display').textContent = avatar;
-  document.getElementById('my-nick-display').textContent = `Benvenuto, ${nickname}!`;
+  document.getElementById('my-nick-display').textContent = `Pulsantiera: ${nickname}`;
 
   if (status === 'LOBBY' || status === 'COUNTDOWN' || status === 'LEADERBOARD') {
     showView('waiting');
@@ -91,10 +101,10 @@ let currentTotalTime = 20;
 socket.on('game:questionStarted', (data) => {
   if (!isJoined) return;
   showView('question');
-  if (navigator.vibrate) navigator.vibrate(50);
+  if (navigator.vibrate) navigator.vibrate([40, 60]);
 
   document.getElementById('player-cat-badge').textContent = data.category || 'UniMe';
-  document.getElementById('player-q-counter').textContent = `Domanda ${data.questionIndex + 1}/${data.totalQuestions}`;
+  document.getElementById('player-q-counter').textContent = `Q: ${data.questionIndex + 1}/${data.totalQuestions}`;
 
   // Reset timer bar
   currentTotalTime = data.timeLimit || 20;
@@ -113,12 +123,12 @@ socket.on('game:questionStarted', (data) => {
   }
 });
 
-// Option Click
-const playerButtons = document.querySelectorAll('.player-btn');
-playerButtons.forEach(btn => {
+// Option Click (Dr. Why pad buttons)
+const padButtons = document.querySelectorAll('.drwhy-pad-btn');
+padButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const optIndex = parseInt(btn.getAttribute('data-opt'), 10);
-    if (navigator.vibrate) navigator.vibrate([30, 40]);
+    if (navigator.vibrate) navigator.vibrate([50, 50]);
     socket.emit('player:submitAnswer', { optionIndex: optIndex });
   });
 });
@@ -132,6 +142,10 @@ socket.on('player:roundResult', ({ isCorrect, pointsEarned, totalScore, streak, 
   if (!isJoined) return;
   showView('result');
 
+  // Aggiorna LCD
+  document.getElementById('lcd-score-num').textContent = totalScore.toLocaleString();
+  document.getElementById('lcd-rank-text').textContent = `POSIZIONE: #${rank} / ${totalPlayers}`;
+
   const resultBox = document.getElementById('result-box');
   const emoji = document.getElementById('result-emoji');
   const title = document.getElementById('result-status');
@@ -143,37 +157,37 @@ socket.on('player:roundResult', ({ isCorrect, pointsEarned, totalScore, streak, 
 
   if (isCorrect) {
     window.sounds.playCorrect();
-    emoji.textContent = '🎉';
-    title.textContent = 'CORRETTO!';
+    emoji.textContent = '⚡';
+    title.textContent = 'ESATTO!';
     title.style.color = '#22c55e';
     pts.textContent = `+${pointsEarned} Punti`;
-    streakEl.textContent = streak > 1 ? `🔥 Risposte corrette di fila: ${streak}!` : '';
+    streakEl.textContent = streak > 1 ? `🔥 SERIE PERFETTA: ${streak} DI FILA!` : '';
   } else {
     window.sounds.playWrong();
     emoji.textContent = '❌';
-    title.textContent = 'SBAGLIATO!';
-    title.style.color = '#ef4444';
+    title.textContent = 'RISPOSTA ERRATA!';
+    title.style.color = '#e11d48';
     pts.textContent = '+0 Punti';
-    streakEl.textContent = 'Non mollare alla prossima!';
+    streakEl.textContent = 'Recupera con la prossima!';
   }
 
-  rankEl.textContent = `Classifica: #${rank} di ${totalPlayers} (${totalScore.toLocaleString()} pt)`;
+  rankEl.textContent = `TABELLONE: #${rank} su ${totalPlayers} (${totalScore.toLocaleString()} pt)`;
 });
 
 // Leaderboard / Waiting state
 socket.on('game:leaderboard', () => {
   if (!isJoined) return;
   showView('waiting');
-  document.getElementById('my-nick-display').textContent = 'Guarda lo schermo!';
-  document.querySelector('.waiting-sub').textContent = 'Classifica mostrata sul maxischermo...';
+  document.getElementById('my-nick-display').textContent = 'Guarda il Tabellone!';
+  document.querySelector('.waiting-sub').textContent = 'Punteggi e posizioni sul maxischermo...';
 });
 
 // Countdown state
 socket.on('game:countdown', () => {
   if (!isJoined) return;
   showView('waiting');
-  document.getElementById('my-nick-display').textContent = 'Preparati!';
-  document.querySelector('.waiting-sub').textContent = 'La prossima domanda sta arrivando...';
+  document.getElementById('my-nick-display').textContent = 'Dita sui pulsanti!';
+  document.querySelector('.waiting-sub').textContent = 'La prossima domanda del Dr. Why sta per partire...';
 });
 
 // Podium / Game Over
@@ -186,8 +200,8 @@ socket.on('game:podium', ({ leaderboard }) => {
 
   if (myRankInfo) {
     statsBox.innerHTML = `
-      <div style="font-size: 1.6rem; color: var(--unime-gold); margin-bottom: 4px;">#${myRankInfo.rank} Posto</div>
-      <div>Punti Totali: <strong>${myRankInfo.score.toLocaleString()}</strong></div>
+      <div style="font-size: 1.8rem; color: var(--accent-gold); margin-bottom: 6px;">#${myRankInfo.rank} CLASSIFICATO</div>
+      <div>Punteggio Finale: <strong>${myRankInfo.score.toLocaleString()} pt</strong></div>
     `;
   }
 });
@@ -197,7 +211,7 @@ socket.on('game:resetToLobby', () => {
   if (isJoined) {
     showView('waiting');
     document.getElementById('my-nick-display').textContent = 'Nuova Partita!';
-    document.querySelector('.waiting-sub').textContent = 'In attesa che l\'host avvii il quiz...';
+    document.querySelector('.waiting-sub').textContent = 'In attesa dell\'avvio del Dr. Why...';
   } else {
     showView('join');
   }
@@ -207,5 +221,5 @@ socket.on('game:resetToLobby', () => {
 socket.on('player:kicked', () => {
   isJoined = false;
   showView('join');
-  alert('Sei stato rimosso dalla partita dall\'organizzatore.');
+  alert('Pulsantiera disconnessa dall\'organizzatore.');
 });
