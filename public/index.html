@@ -2,7 +2,11 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#090e1a">
   <title>UniMe Level Up | L'interactive info show per le matricole</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/player.css">
@@ -17,8 +21,10 @@
         <img src="/assets/ORUM.svg" alt="O.R.U.M." onerror="this.src='/assets/ORUM.png'">
         <span class="pulsantiera-brand-text">MORGANA &amp; O.R.U.M.</span>
       </div>
-      <div style="font-family: var(--font-mono); font-size: 0.8rem; color: #ef4444; font-weight: 700;">
-        ● UNIME LEVEL UP
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button id="btn-player-fs" class="btn-fs-pill" title="Schermo Intero">
+          ⛶ Schermo Intero
+        </button>
       </div>
     </header>
 

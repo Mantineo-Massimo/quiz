@@ -1,23 +1,67 @@
 /* Mobile-first: Telecomando / Pulsantiera Dr. Why */
+html, body {
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  background-color: var(--bg-dark);
+}
+
 .player-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   max-width: 520px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 10px 14px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .player-view {
   display: none;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .player-view.active {
   display: flex;
+}
+
+.btn-fs-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f1f5f9;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-fs-pill:active {
+  background: var(--morgana-red);
+  border-color: var(--morgana-red);
+  transform: scale(0.96);
 }
 
 /* Pulsantiera Header */
@@ -247,14 +291,27 @@
 }
 
 /* 3. QUESTION VIEW (PULSANTIERA DR. WHY) */
+#view-question {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#view-question.active {
+  display: flex;
+}
+
 .pulsantiera-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
   flex: 1;
-  min-height: 420px;
-  padding-bottom: 12px;
+  min-height: 0;
+  height: 100%;
+  padding-bottom: 6px;
 }
 
 /* Pulsanti 3D con effetto pressione Dr. Why */
@@ -263,19 +320,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 22px 14px;
-  border-radius: 24px;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 20px;
   border: none;
   color: #fff;
   font-family: var(--font-display);
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 12px 0 rgba(0, 0, 0, 0.6), 0 16px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.6), 0 12px 20px rgba(0, 0, 0, 0.4);
   transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
   text-align: center;
   position: relative;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  height: 100%;
+  min-height: 0;
 }
 
 .drwhy-pad-btn:active {

@@ -18,6 +18,65 @@ function showView(name) {
   });
 }
 
+// Fullscreen Automatico & Gestione Schermo
+function requestPhoneFullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {});
+    } else if (el.webkitRequestFullscreen) {
+      el.webkitRequestFullscreen();
+    } else if (el.msRequestFullscreen) {
+      el.msRequestFullscreen();
+    }
+  }
+}
+
+function exitPhoneFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {});
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  }
+}
+
+function togglePhoneFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    exitPhoneFullscreen();
+  } else {
+    requestPhoneFullscreen();
+  }
+}
+
+// Aggancia pulsante schermo intero nell'header
+const btnPlayerFs = document.getElementById('btn-player-fs');
+if (btnPlayerFs) {
+  btnPlayerFs.addEventListener('click', (e) => {
+    e.stopPropagation();
+    togglePhoneFullscreen();
+  });
+}
+
+function updateFsButtonLabel() {
+  if (btnPlayerFs) {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    btnPlayerFs.textContent = isFs ? '✕ Riduci' : '⛶ Schermo Intero';
+  }
+}
+document.addEventListener('fullscreenchange', updateFsButtonLabel);
+document.addEventListener('webkitfullscreenchange', updateFsButtonLabel);
+
+// Al primissimo tocco ovunque sullo schermo attiva lo schermo intero per non squadrare la grafica
+let hasAttemptedAutoFs = false;
+function onFirstUserInteraction() {
+  if (!hasAttemptedAutoFs) {
+    hasAttemptedAutoFs = true;
+    requestPhoneFullscreen();
+  }
+}
+window.addEventListener('touchstart', onFirstUserInteraction, { passive: true });
+window.addEventListener('click', onFirstUserInteraction, { passive: true });
+
 // State
 let selectedAvatar = '🎓';
 let playerNickname = '';
@@ -39,6 +98,7 @@ try {
 const avatarBtns = document.querySelectorAll('.avatar-btn');
 avatarBtns.forEach(btn => {
   btn.addEventListener('click', () => {
+    requestPhoneFullscreen();
     avatarBtns.forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedAvatar = btn.getAttribute('data-avatar');
@@ -95,6 +155,7 @@ inputNick.addEventListener('keydown', (e) => {
 });
 
 function handleJoin() {
+  requestPhoneFullscreen();
   const nick = inputNick.value.trim();
   if (!nick) {
     inputNick.focus();
