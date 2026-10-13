@@ -35,6 +35,30 @@
       <button class="tab-btn" data-tab="tab-network">🌐 Rete &amp; QR Code</button>
     </div>
 
+    <!-- BARRA STATO IN TEMPO REALE -->
+    <div class="admin-status-banner" style="background: rgba(13, 20, 36, 0.85); border: 1px solid var(--border-glass); border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.4rem;">📡</span>
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6);">Fase Partita Attuale:</div>
+          <div id="admin-status-text" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-gold);">LOBBY (In attesa)</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <div style="text-align: right;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6);">Domanda:</div>
+          <div id="admin-q-indicator" style="font-size: 1.1rem; font-weight: 700; color: #fff;">-</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6);">Risposte Ricevute:</div>
+          <div id="admin-answers-indicator" style="font-size: 1.1rem; font-weight: 700; color: #10b981;">0 / 0</div>
+        </div>
+        <div style="padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.78rem; color: #10b981; font-weight: 600;">
+          💾 DB SALVATO
+        </div>
+      </div>
+    </div>
+
     <!-- TAB 1: CONTROLLO GIOCO -->
     <div id="tab-control" class="admin-panel active">
       <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Comandi Partita Rapidi</h2>
@@ -53,6 +77,9 @@
         </button>
         <button id="admin-btn-reset" class="btn btn-glass" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">
           🔄 Resetta alla Lobby
+        </button>
+        <button id="admin-btn-clear-all" class="btn btn-glass" style="background: rgba(153, 27, 27, 0.3); border-color: #b91c1c; color: #fca5a5;">
+          🗑️ Svuota Tutti i Giocatori
         </button>
       </div>
 

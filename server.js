@@ -18,7 +18,7 @@ let customPublicUrl = process.env.PUBLIC_URL || '';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Carica domande
+// Carica domande da file
 const questionsPath = path.join(__dirname, 'questions.json');
 let questions = [];
 try {
@@ -41,18 +41,11 @@ function getLocalIpAddresses() {
   return addresses;
 }
 
-// Stato di Gioco Globale
-const gameState = {
-  status: 'LOBBY', // 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'SHOW_ANSWER' | 'LEADERBOARD' | 'PODIUM'
-  currentQuestionIndex: 0,
-  timeRemaining: 20,
-  timerInterval: null,
-  players: {}, // socketId -> { id, nickname, avatar, score, streak, lastAnswer: null, lastAnswerTime: 0, lastPointsEarned: 0 }
-  answersCurrentQuestion: {}, // socketId -> optionIndex
-  answerStats: [0, 0, 0, 0]
-};
+// Database Persistente su Disco (sopravvive a riavvii, crash e ricaricamenti)
+const db = require('./database');
+const gameState = db.state;
 
-// Calcolo Punti basato su correttezza, velocità e streak
+// Calcolo Punti basato su correttezza, velocità e streak (stile Dr. Why)
 function calculateScore(timeRemaining, timeLimit, isCorrect, streak) {
   if (!isCorrect) return 0;
   const ratio = Math.max(0, Math.min(1, timeRemaining / timeLimit));
@@ -62,15 +55,16 @@ function calculateScore(timeRemaining, timeLimit, isCorrect, streak) {
   return basePoints + speedBonus + streakBonus;
 }
 
-// Genera Classifica
+// Genera Classifica aggiornata
 function getLeaderboard() {
   const list = Object.values(gameState.players).map(p => ({
     id: p.id,
     nickname: p.nickname,
     avatar: p.avatar,
-    score: p.score,
-    streak: p.streak,
-    lastPointsEarned: p.lastPointsEarned
+    score: p.score || 0,
+    streak: p.streak || 0,
+    lastPointsEarned: p.lastPointsEarned || 0,
+    connected: !!p.connected
   }));
   list.sort((a, b) => b.score - a.score);
   return list.map((p, idx) => ({ ...p, rank: idx + 1 }));
@@ -142,13 +136,48 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Helper: invia syncState completo a un socket o a tutti
+function sendSyncState(target) {
+  const currentQ = questions[gameState.currentQuestionIndex];
+  const leaderboard = getLeaderboard();
+  const payload = {
+    status: gameState.status,
+    currentQuestionIndex: gameState.currentQuestionIndex,
+    totalQuestions: questions.length,
+    playerCount: Object.values(gameState.players).length,
+    timeRemaining: gameState.timeRemaining,
+    currentQuestion: currentQ ? {
+      questionIndex: gameState.currentQuestionIndex,
+      totalQuestions: questions.length,
+      category: currentQ.category,
+      question: currentQ.question,
+      options: currentQ.options,
+      timeLimit: currentQ.timeLimit || 20
+    } : null,
+    correctIndex: currentQ ? currentQ.correctIndex : 0,
+    explanation: currentQ ? (currentQ.explanation || '') : '',
+    answerStats: gameState.answerStats || [0, 0, 0, 0],
+    answeredCount: Object.keys(gameState.answersCurrentQuestion || {}).length,
+    leaderboard
+  };
+
+  if (target && typeof target.emit === 'function') {
+    target.emit('game:syncState', payload);
+  } else {
+    io.emit('game:syncState', payload);
+  }
+}
+
 // Timer Gestione Domande
 function startQuestionTimer() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
 
   const currentQ = questions[gameState.currentQuestionIndex];
   const timeLimit = currentQ ? currentQ.timeLimit || 20 : 20;
-  gameState.timeRemaining = timeLimit;
+
+  if (!gameState.timeRemaining || gameState.timeRemaining <= 0) {
+    gameState.timeRemaining = timeLimit;
+  }
 
   gameState.timerInterval = setInterval(() => {
     gameState.timeRemaining -= 1;
@@ -168,20 +197,21 @@ function revealAnswer() {
     gameState.timerInterval = null;
   }
   gameState.status = 'SHOW_ANSWER';
+  gameState.timeRemaining = 0;
 
   const currentQ = questions[gameState.currentQuestionIndex];
   if (!currentQ) return;
 
-  // Calcolo punti e streak per ogni giocatore
-  for (const socketId of Object.keys(gameState.players)) {
-    const player = gameState.players[socketId];
-    const playerAnswer = gameState.answersCurrentQuestion[socketId];
+  // Calcolo punti e serie per ogni giocatore
+  for (const pid of Object.keys(gameState.players)) {
+    const player = gameState.players[pid];
+    const playerAnswer = gameState.answersCurrentQuestion[pid];
     const isCorrect = (playerAnswer !== undefined && playerAnswer === currentQ.correctIndex);
 
     if (isCorrect) {
       player.streak = (player.streak || 0) + 1;
-      const pts = calculateScore(player.lastAnswerTime, currentQ.timeLimit || 20, true, player.streak);
-      player.score += pts;
+      const pts = calculateScore(player.lastAnswerTime || 0, currentQ.timeLimit || 20, true, player.streak);
+      player.score = (player.score || 0) + pts;
       player.lastPointsEarned = pts;
     } else {
       player.streak = 0;
@@ -190,8 +220,9 @@ function revealAnswer() {
   }
 
   const leaderboard = getLeaderboard();
+  db.save(); // SALVA IMMEDIATAMENTE NEL DATABASE PERSISTENTE
 
-  // Invia a tutti i dati di svelamento
+  // Invia a host e schermi i dati di svelamento
   io.emit('game:answerRevealed', {
     correctIndex: currentQ.correctIndex,
     explanation: currentQ.explanation,
@@ -199,14 +230,14 @@ function revealAnswer() {
     leaderboard
   });
 
-  // Notifica specifica a ogni giocatore se ha indovinato
-  for (const socketId of Object.keys(gameState.players)) {
-    const player = gameState.players[socketId];
-    const playerAnswer = gameState.answersCurrentQuestion[socketId];
+  // Notifica specifica a ciascun giocatore nella sua stanza dedicata
+  for (const pid of Object.keys(gameState.players)) {
+    const player = gameState.players[pid];
+    const playerAnswer = gameState.answersCurrentQuestion[pid];
     const isCorrect = (playerAnswer !== undefined && playerAnswer === currentQ.correctIndex);
     const playerRank = leaderboard.find(p => p.id === player.id)?.rank || 1;
 
-    io.to(socketId).emit('player:roundResult', {
+    io.to(pid).emit('player:roundResult', {
       isCorrect,
       selectedOption: playerAnswer,
       correctIndex: currentQ.correctIndex,
@@ -221,6 +252,8 @@ function revealAnswer() {
 
 function startCountdown() {
   gameState.status = 'COUNTDOWN';
+  db.save();
+
   let count = 3;
   io.emit('game:countdown', { count });
 
@@ -246,14 +279,17 @@ function launchQuestion() {
     return;
   }
 
-  // Notifica host e player
+  gameState.timeRemaining = currentQ.timeLimit || 20;
+  db.save(); // SALVA NEL DATABASE
+
+  // Notifica host e giocatori
   io.emit('game:questionStarted', {
     questionIndex: gameState.currentQuestionIndex,
     totalQuestions: questions.length,
     category: currentQ.category,
     question: currentQ.question,
     options: currentQ.options,
-    timeLimit: currentQ.timeLimit || 20
+    timeLimit: gameState.timeRemaining
   });
 
   startQuestionTimer();
@@ -262,6 +298,8 @@ function launchQuestion() {
 function showLeaderboard() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
   gameState.status = 'LEADERBOARD';
+  db.save(); // SALVA NEL DATABASE
+
   const leaderboard = getLeaderboard();
   io.emit('game:leaderboard', {
     leaderboard,
@@ -274,6 +312,8 @@ function showLeaderboard() {
 function showPodium() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
   gameState.status = 'PODIUM';
+  db.save(); // SALVA NEL DATABASE
+
   const leaderboard = getLeaderboard();
   io.emit('game:podium', { leaderboard });
 }
@@ -281,27 +321,10 @@ function showPodium() {
 // Mappa socket.id -> playerId
 const socketToPlayerId = {};
 
-// Socket.io handlers
+// Socket.io Handlers
 io.on('connection', (socket) => {
-  // Sync stato corrente al nuovo arrivato
-  const currentQ = questions[gameState.currentQuestionIndex];
-  socket.emit('game:syncState', {
-    status: gameState.status,
-    currentQuestionIndex: gameState.currentQuestionIndex,
-    totalQuestions: questions.length,
-    playerCount: Object.values(gameState.players).length,
-    timeRemaining: gameState.timeRemaining,
-    currentQuestion: (gameState.status === 'QUESTION' && currentQ) ? {
-      questionIndex: gameState.currentQuestionIndex,
-      totalQuestions: questions.length,
-      category: currentQ.category,
-      question: currentQ.question,
-      options: currentQ.options,
-      timeLimit: currentQ.timeLimit || 20
-    } : null
-  });
-
-  // Invia SEMPRE l'elenco dei giocatori a chiunque si colleghi (incluso l'host che fa Ctrl+F5)
+  // Sync completo immediato a chiunque si colleghi (Host, Admin, Player ricaricati)
+  sendSyncState(socket);
   socket.emit('host:playersUpdated', Object.values(gameState.players));
 
   // Giocatore si registra o si riconnette
@@ -310,26 +333,18 @@ io.on('connection', (socket) => {
     const pid = playerId || `p_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
     socketToPlayerId[socket.id] = pid;
+    socket.join(pid); // FONDAMENTALE: unisce alla stanza del suo playerId
 
-    if (gameState.players[pid]) {
-      // Riconnessione dello stesso giocatore (es. Ctrl+F5): mantieni punti e serie!
-      const existing = gameState.players[pid];
-      existing.socketId = socket.id;
-      existing.connected = true;
-      if (nickname) existing.nickname = cleanNick;
-      if (avatar) existing.avatar = avatar;
-
-      socket.emit('player:joined', {
-        id: pid,
-        nickname: existing.nickname,
-        avatar: existing.avatar,
-        status: gameState.status,
-        score: existing.score,
-        streak: existing.streak
-      });
+    let player = gameState.players[pid];
+    if (player) {
+      // Giocatore già nel DB: mantieni punteggio, serie e stato!
+      player.socketId = socket.id;
+      player.connected = true;
+      if (nickname) player.nickname = cleanNick;
+      if (avatar) player.avatar = avatar;
     } else {
-      // Nuovo giocatore
-      gameState.players[pid] = {
+      // Nuovo partecipante
+      player = {
         id: pid,
         socketId: socket.id,
         nickname: cleanNick,
@@ -341,18 +356,33 @@ io.on('connection', (socket) => {
         lastAnswerTime: 0,
         lastPointsEarned: 0
       };
-
-      socket.emit('player:joined', {
-        id: pid,
-        nickname: cleanNick,
-        avatar: gameState.players[pid].avatar,
-        status: gameState.status,
-        score: 0,
-        streak: 0
-      });
+      gameState.players[pid] = player;
     }
 
-    // Se c'è una domanda in corso, inviala subito al giocatore riconnesso
+    db.save(); // PERSISTE SUBITO SU DISCO
+
+    const leaderboard = getLeaderboard();
+    const rankInfo = leaderboard.find(p => p.id === pid);
+    const currentQ = questions[gameState.currentQuestionIndex];
+    const playerAns = gameState.answersCurrentQuestion ? gameState.answersCurrentQuestion[pid] : undefined;
+    const isCorrect = (currentQ && playerAns !== undefined && playerAns === currentQ.correctIndex);
+
+    // Invia lo stato completo al giocatore
+    socket.emit('player:joined', {
+      id: pid,
+      nickname: player.nickname,
+      avatar: player.avatar,
+      status: gameState.status,
+      score: player.score,
+      streak: player.streak,
+      rank: rankInfo ? rankInfo.rank : 1,
+      totalPlayers: leaderboard.length,
+      playerAnswer: playerAns,
+      isCorrect: isCorrect,
+      pointsEarned: player.lastPointsEarned
+    });
+
+    // Se c'è una domanda in corso, inviala con il tempo rimanente esatto
     if (gameState.status === 'QUESTION' && currentQ) {
       socket.emit('game:questionStarted', {
         questionIndex: gameState.currentQuestionIndex,
@@ -362,13 +392,12 @@ io.on('connection', (socket) => {
         options: currentQ.options,
         timeLimit: gameState.timeRemaining || currentQ.timeLimit || 20
       });
-      // Se aveva già risposto
-      if (gameState.answersCurrentQuestion[pid] !== undefined) {
-        socket.emit('player:answerAck');
+      if (playerAns !== undefined) {
+        socket.emit('player:answerAck', { optionIndex: playerAns });
       }
     }
 
-    // Notifica host e admin
+    // Notifica host e regia dell'elenco aggiornato
     io.emit('host:playersUpdated', Object.values(gameState.players));
   });
 
@@ -378,7 +407,8 @@ io.on('connection', (socket) => {
     const pid = socketToPlayerId[socket.id];
     if (!pid) return;
 
-    if (gameState.answersCurrentQuestion[pid] !== undefined) return; // già risposto
+    if (!gameState.answersCurrentQuestion) gameState.answersCurrentQuestion = {};
+    if (gameState.answersCurrentQuestion[pid] !== undefined) return; // Ha già risposto
 
     const player = gameState.players[pid];
     if (!player) return;
@@ -388,8 +418,11 @@ io.on('connection', (socket) => {
     player.lastAnswerTime = gameState.timeRemaining;
 
     if (optionIndex >= 0 && optionIndex < 4) {
+      if (!gameState.answerStats) gameState.answerStats = [0, 0, 0, 0];
       gameState.answerStats[optionIndex]++;
     }
+
+    db.save(); // PERSISTE RISPOSTA SUBITO SU DISCO
 
     const answeredCount = Object.keys(gameState.answersCurrentQuestion).length;
     const totalPlayers = Object.values(gameState.players).filter(p => p.connected).length;
@@ -397,7 +430,7 @@ io.on('connection', (socket) => {
     socket.emit('player:answerAck', { optionIndex });
     io.emit('game:answersCountUpdated', { answeredCount, totalPlayers });
 
-    // Se tutti i giocatori connessi hanno risposto, chiudi subito
+    // Se tutti i partecipanti attivi hanno risposto, svela subito
     if (answeredCount >= totalPlayers && totalPlayers > 0) {
       revealAnswer();
     }
@@ -405,13 +438,7 @@ io.on('connection', (socket) => {
 
   // Comandi Host / Admin
   socket.on('admin:startGame', () => {
-    gameState.currentQuestionIndex = 0;
-    // Resetta punteggi
-    for (const p of Object.values(gameState.players)) {
-      p.score = 0;
-      p.streak = 0;
-      p.lastPointsEarned = 0;
-    }
+    db.reset();
     startCountdown();
   });
 
@@ -440,44 +467,58 @@ io.on('connection', (socket) => {
 
   socket.on('admin:resetLobby', () => {
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
-    gameState.status = 'LOBBY';
-    gameState.currentQuestionIndex = 0;
-    for (const p of Object.values(gameState.players)) {
-      p.score = 0;
-      p.streak = 0;
-      p.lastPointsEarned = 0;
-    }
+    db.reset();
     io.emit('game:resetToLobby');
     io.emit('host:playersUpdated', Object.values(gameState.players));
+    sendSyncState();
+  });
+
+  socket.on('admin:clearAllPlayers', () => {
+    if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+    db.clearPlayers();
+    io.emit('game:resetToLobby');
+    io.emit('host:playersUpdated', []);
+    sendSyncState();
   });
 
   socket.on('admin:kickPlayer', ({ playerId }) => {
     if (gameState.players[playerId]) {
-      const sockId = gameState.players[playerId].socketId;
       delete gameState.players[playerId];
-      delete gameState.answersCurrentQuestion[playerId];
-      if (sockId) io.to(sockId).emit('player:kicked');
+      if (gameState.answersCurrentQuestion) delete gameState.answersCurrentQuestion[playerId];
+      db.save();
+      io.to(playerId).emit('player:kicked');
       io.emit('host:playersUpdated', Object.values(gameState.players));
+      sendSyncState();
     }
   });
 
-  // Disconnessione (NON cancella il punteggio, segna solo offline per consentire il reconnect!)
+  // Disconnessione socket (NON cancella il giocatore dal DB: preserva punti e streak!)
   socket.on('disconnect', () => {
     const pid = socketToPlayerId[socket.id];
     if (pid && gameState.players[pid]) {
       gameState.players[pid].connected = false;
       delete socketToPlayerId[socket.id];
-      // Notifica solo aggiornamento presenze senza azzerare
+      db.save();
       io.emit('host:playersUpdated', Object.values(gameState.players));
     }
   });
 });
+
+// Ripresa sicura se il server si riavvia durante una domanda
+if (gameState.status === 'QUESTION') {
+  if (gameState.timeRemaining > 0) {
+    startQuestionTimer();
+  } else {
+    revealAnswer();
+  }
+}
 
 server.listen(PORT, '0.0.0.0', () => {
   const ips = getLocalIpAddresses();
   console.log(`\n======================================================`);
   console.log(`🎯 UNIME LEVEL UP: L'interactive info show per le matricole`);
   console.log(`🏛️ Organizzato da Morgana & O.R.U.M. • Porta ${PORT}`);
+  console.log(`💾 Database: db.json attivo con persistenza stato completa`);
   console.log(`🖥️  SCHERMO PRINCIPALE (Host): http://localhost:${PORT}/host`);
   console.log(`📱 PARTECIPANTI (Mobile):      http://${ips[0] || 'localhost'}:${PORT}`);
   console.log(`⚙️  REGIA / ADMIN:             http://localhost:${PORT}/admin`);

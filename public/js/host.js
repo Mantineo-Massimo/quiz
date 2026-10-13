@@ -18,22 +18,58 @@ function showScreen(name) {
   window.scrollTo(0, 0);
 }
 
-// Ripristino stato se l'host ricarica la pagina con Ctrl+F5
+// Ripristino stato completo su ricarica (Ctrl+F5)
 socket.on('game:syncState', (state) => {
-  if (state.status === 'QUESTION' && state.currentQuestion) {
+  if (state.status === 'LOBBY') {
+    showScreen('lobby');
+  } else if (state.status === 'COUNTDOWN') {
+    showScreen('countdown');
+  } else if (state.status === 'QUESTION' && state.currentQuestion) {
     showScreen('question');
     document.getElementById('category-badge').textContent = state.currentQuestion.category || 'UniMe';
     document.getElementById('question-index-badge').textContent = `DOMANDA ${state.currentQuestion.questionIndex + 1} / ${state.currentQuestion.totalQuestions}`;
     document.getElementById('question-text').textContent = state.currentQuestion.question;
     document.getElementById('timer-display').textContent = state.timeRemaining || state.currentQuestion.timeLimit;
+    document.getElementById('explanation-box').style.display = 'none';
+    const answeredCount = state.answeredCount || 0;
+    const totalPlayers = state.playerCount || 0;
+    document.getElementById('answers-badge').textContent = `Risposte: ${answeredCount} / ${totalPlayers}`;
     for (let i = 0; i < 4; i++) {
+      const card = document.getElementById(`opt-${i}`);
       const text = document.getElementById(`opt-text-${i}`);
+      const stats = document.getElementById(`opt-stats-${i}`);
+      card.classList.remove('dimmed', 'correct');
+      stats.style.display = 'none';
       if (text) text.textContent = state.currentQuestion.options[i] || '';
     }
+  } else if (state.status === 'SHOW_ANSWER' && state.currentQuestion) {
+    showScreen('question');
+    document.getElementById('category-badge').textContent = state.currentQuestion.category || 'UniMe';
+    document.getElementById('question-index-badge').textContent = `DOMANDA ${state.currentQuestion.questionIndex + 1} / ${state.currentQuestion.totalQuestions}`;
+    document.getElementById('question-text').textContent = state.currentQuestion.question;
+    document.getElementById('timer-display').textContent = '0';
+    document.getElementById('answers-badge').textContent = 'Tempo Scaduto';
+    for (let i = 0; i < 4; i++) {
+      const card = document.getElementById(`opt-${i}`);
+      const text = document.getElementById(`opt-text-${i}`);
+      const stats = document.getElementById(`opt-stats-${i}`);
+      if (text) text.textContent = state.currentQuestion.options[i] || '';
+      if (i === state.correctIndex) {
+        card.classList.add('correct');
+        card.classList.remove('dimmed');
+      } else {
+        card.classList.add('dimmed');
+        card.classList.remove('correct');
+      }
+      stats.style.display = 'block';
+      stats.textContent = `👥 ${state.answerStats ? (state.answerStats[i] || 0) : 0}`;
+    }
+    document.getElementById('explanation-text-content').textContent = state.explanation || 'Ottima risposta!';
+    document.getElementById('explanation-box').style.display = 'flex';
   } else if (state.status === 'LEADERBOARD') {
-    showScreen('leaderboard');
+    renderLeaderboard(state.leaderboard || [], state.currentQuestionIndex >= state.totalQuestions - 1);
   } else if (state.status === 'PODIUM') {
-    showScreen('podium');
+    renderPodium(state.leaderboard || []);
   }
 });
 
@@ -177,13 +213,13 @@ document.getElementById('btn-next-action').addEventListener('click', () => {
   socket.emit('admin:next');
 });
 
-// Leaderboard
-socket.on('game:leaderboard', ({ leaderboard, isLastQuestion }) => {
+// Leaderboard Render Helper
+function renderLeaderboard(leaderboard, isLastQuestion) {
   showScreen('leaderboard');
   const listEl = document.getElementById('leaderboard-list');
   listEl.innerHTML = '';
 
-  const topPlayers = leaderboard.slice(0, 5);
+  const topPlayers = (leaderboard || []).slice(0, 8);
   topPlayers.forEach(p => {
     const row = document.createElement('div');
     row.className = `leaderboard-row rank-${p.rank}`;
@@ -200,7 +236,7 @@ socket.on('game:leaderboard', ({ leaderboard, isLastQuestion }) => {
       <div class="avatar">${p.avatar}</div>
       <div class="player-name">${p.nickname}</div>
       ${streakBadge}
-      <div class="score">${p.score.toLocaleString()} pt</div>
+      <div class="score">${(p.score || 0).toLocaleString()} pt</div>
     `;
     listEl.appendChild(row);
   });
@@ -211,13 +247,40 @@ socket.on('game:leaderboard', ({ leaderboard, isLastQuestion }) => {
   } else {
     btnNext.textContent = 'PROSSIMA DOMANDA ➡️ (Spazio)';
   }
+}
+
+socket.on('game:leaderboard', ({ leaderboard, isLastQuestion }) => {
+  renderLeaderboard(leaderboard, isLastQuestion);
 });
 
 document.getElementById('btn-next-question').addEventListener('click', () => {
   socket.emit('admin:next');
 });
 
-// Podium
+// Podium Render Helper
+function renderPodium(leaderboard) {
+  showScreen('podium');
+  const p1 = (leaderboard || [])[0];
+  const p2 = (leaderboard || [])[1];
+  const p3 = (leaderboard || [])[2];
+
+  if (p1) {
+    document.getElementById('podium-avatar-1').textContent = p1.avatar || '🥇';
+    document.getElementById('podium-name-1').textContent = p1.nickname;
+    document.getElementById('podium-pts-1').textContent = `${(p1.score || 0).toLocaleString()} pt`;
+  }
+  if (p2) {
+    document.getElementById('podium-avatar-2').textContent = p2.avatar || '🥈';
+    document.getElementById('podium-name-2').textContent = p2.nickname;
+    document.getElementById('podium-pts-2').textContent = `${(p2.score || 0).toLocaleString()} pt`;
+  }
+  if (p3) {
+    document.getElementById('podium-avatar-3').textContent = p3.avatar || '🥉';
+    document.getElementById('podium-name-3').textContent = p3.nickname;
+    document.getElementById('podium-pts-3').textContent = `${(p3.score || 0).toLocaleString()} pt`;
+  }
+}
+
 function fireConfetti() {
   if (typeof confetti === 'function') {
     confetti({
@@ -243,29 +306,9 @@ function fireConfetti() {
 }
 
 socket.on('game:podium', ({ leaderboard }) => {
-  showScreen('podium');
+  renderPodium(leaderboard);
   window.sounds.playPodiumFanfare();
   fireConfetti();
-
-  const p1 = leaderboard[0];
-  const p2 = leaderboard[1];
-  const p3 = leaderboard[2];
-
-  if (p1) {
-    document.getElementById('podium-avatar-1').textContent = p1.avatar || '🥇';
-    document.getElementById('podium-name-1').textContent = p1.nickname;
-    document.getElementById('podium-pts-1').textContent = `${p1.score.toLocaleString()} pt`;
-  }
-  if (p2) {
-    document.getElementById('podium-avatar-2').textContent = p2.avatar || '🥈';
-    document.getElementById('podium-name-2').textContent = p2.nickname;
-    document.getElementById('podium-pts-2').textContent = `${p2.score.toLocaleString()} pt`;
-  }
-  if (p3) {
-    document.getElementById('podium-avatar-3').textContent = p3.avatar || '🥉';
-    document.getElementById('podium-name-3').textContent = p3.nickname;
-    document.getElementById('podium-pts-3').textContent = `${p3.score.toLocaleString()} pt`;
-  }
 });
 
 document.getElementById('btn-confetti-more').addEventListener('click', () => {

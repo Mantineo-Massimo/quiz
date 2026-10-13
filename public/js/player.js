@@ -121,32 +121,70 @@ if (btnEditTeam) {
   });
 }
 
-socket.on('player:joined', ({ nickname, avatar, status, score, streak }) => {
+socket.on('player:joined', (data) => {
   isJoined = true;
 
   // Mostra display LCD della pulsantiera
   const lcdDisplay = document.getElementById('lcd-display');
   if (lcdDisplay) {
     lcdDisplay.style.display = 'flex';
-    document.getElementById('lcd-nickname').textContent = nickname;
-    document.getElementById('lcd-avatar').textContent = avatar;
-    document.getElementById('lcd-score-num').textContent = (score || 0).toLocaleString();
+    document.getElementById('lcd-nickname').textContent = data.nickname;
+    document.getElementById('lcd-avatar').textContent = data.avatar;
+    document.getElementById('lcd-score-num').textContent = (data.score || 0).toLocaleString();
+    if (data.rank) {
+      document.getElementById('lcd-rank-text').textContent = `POSIZIONE: #${data.rank} / ${data.totalPlayers || 1}`;
+    }
   }
 
-  document.getElementById('my-avatar-display').textContent = avatar;
-  document.getElementById('my-nick-display').textContent = `Pulsantiera: ${nickname}`;
+  document.getElementById('my-avatar-display').textContent = data.avatar;
+  document.getElementById('my-nick-display').textContent = `Pulsantiera: ${data.nickname}`;
 
-  if (status === 'LOBBY' || status === 'COUNTDOWN' || status === 'LEADERBOARD') {
+  if (data.status === 'LOBBY' || data.status === 'COUNTDOWN' || data.status === 'LEADERBOARD') {
     showView('waiting');
-  } else if (status === 'QUESTION') {
-    showView('question');
+  } else if (data.status === 'QUESTION') {
+    if (data.playerAnswer !== undefined) {
+      answerSubmitted = true;
+      showView('answered');
+    } else {
+      answerSubmitted = false;
+      showView('question');
+    }
+  } else if (data.status === 'SHOW_ANSWER') {
+    showView('result');
+    const resultBox = document.getElementById('result-box');
+    const emoji = document.getElementById('result-emoji');
+    const title = document.getElementById('result-status');
+    const pts = document.getElementById('result-pts');
+    const streakEl = document.getElementById('result-streak');
+    const rankEl = document.getElementById('result-rank');
+
+    resultBox.className = 'round-result-card ' + (data.isCorrect ? 'correct' : 'wrong');
+    if (data.isCorrect) {
+      emoji.textContent = '⚡';
+      title.textContent = 'ESATTO!';
+      title.style.color = '#22c55e';
+      pts.textContent = `+${data.pointsEarned || 0} Punti`;
+      streakEl.textContent = data.streak > 1 ? `🔥 SERIE PERFETTA: ${data.streak} DI FILA!` : '';
+    } else {
+      emoji.textContent = '❌';
+      title.textContent = 'RISPOSTA ERRATA!';
+      title.style.color = '#e11d48';
+      pts.textContent = '+0 Punti';
+      streakEl.textContent = 'Recupera con la prossima!';
+    }
+    rankEl.textContent = `TABELLONE: #${data.rank || 1} su ${data.totalPlayers || 1} (${(data.score || 0).toLocaleString()} pt)`;
+  } else if (data.status === 'PODIUM') {
+    showView('gameOver');
   }
 });
 
 // Question Started
 let currentTotalTime = 20;
+let answerSubmitted = false;
+
 socket.on('game:questionStarted', (data) => {
   if (!isJoined) return;
+  answerSubmitted = false;
   showView('question');
   if (navigator.vibrate) navigator.vibrate([40, 60]);
 
@@ -174,13 +212,17 @@ socket.on('game:questionStarted', (data) => {
 const padButtons = document.querySelectorAll('.drwhy-pad-btn');
 padButtons.forEach(btn => {
   btn.addEventListener('click', () => {
+    if (answerSubmitted) return;
+    answerSubmitted = true;
     const optIndex = parseInt(btn.getAttribute('data-opt'), 10);
     if (navigator.vibrate) navigator.vibrate([50, 50]);
     socket.emit('player:submitAnswer', { optionIndex: optIndex });
+    showView('answered');
   });
 });
 
 socket.on('player:answerAck', () => {
+  answerSubmitted = true;
   showView('answered');
 });
 

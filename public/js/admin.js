@@ -15,6 +15,82 @@ tabBtns.forEach(btn => {
   });
 });
 
+// Live State Indicators
+const statusText = document.getElementById('admin-status-text');
+const qIndicator = document.getElementById('admin-q-indicator');
+const answersIndicator = document.getElementById('admin-answers-indicator');
+
+function updateLiveStatus(state) {
+  if (!state) return;
+  if (state.status === 'LOBBY') {
+    statusText.textContent = 'LOBBY (In attesa)';
+    statusText.style.color = 'var(--accent-gold)';
+    qIndicator.textContent = '-';
+    answersIndicator.textContent = '0 / 0';
+  } else if (state.status === 'COUNTDOWN') {
+    statusText.textContent = 'COUNTDOWN IN CORSO...';
+    statusText.style.color = '#38bdf8';
+  } else if (state.status === 'QUESTION') {
+    statusText.textContent = `DOMANDA IN CORSO (${state.timeRemaining || 0}s)`;
+    statusText.style.color = '#eab308';
+    qIndicator.textContent = `${(state.currentQuestionIndex || 0) + 1} / ${state.totalQuestions || 15}`;
+    answersIndicator.textContent = `${state.answeredCount || 0} / ${state.playerCount || 0}`;
+  } else if (state.status === 'SHOW_ANSWER') {
+    statusText.textContent = 'RISPOSTA SVELATA';
+    statusText.style.color = '#10b981';
+    answersIndicator.textContent = 'Concluso';
+  } else if (state.status === 'LEADERBOARD') {
+    statusText.textContent = 'CLASSIFICA PARZIALE';
+    statusText.style.color = '#a855f7';
+  } else if (state.status === 'PODIUM') {
+    statusText.textContent = '🏆 PODIO FINALE MOSTRATO';
+    statusText.style.color = 'var(--accent-gold)';
+  }
+}
+
+socket.on('game:syncState', (state) => {
+  updateLiveStatus(state);
+});
+
+socket.on('game:questionStarted', (data) => {
+  statusText.textContent = `DOMANDA IN CORSO (${data.timeLimit}s)`;
+  statusText.style.color = '#eab308';
+  qIndicator.textContent = `${data.questionIndex + 1} / ${data.totalQuestions}`;
+  answersIndicator.textContent = `0 / ${adminPlayerCount.textContent || 0}`;
+});
+
+socket.on('game:timerTick', ({ timeRemaining }) => {
+  if (statusText.textContent.includes('DOMANDA')) {
+    statusText.textContent = `DOMANDA IN CORSO (${timeRemaining}s)`;
+  }
+});
+
+socket.on('game:answersCountUpdated', ({ answeredCount, totalPlayers }) => {
+  answersIndicator.textContent = `${answeredCount} / ${totalPlayers}`;
+});
+
+socket.on('game:answerRevealed', () => {
+  statusText.textContent = 'RISPOSTA SVELATA';
+  statusText.style.color = '#10b981';
+});
+
+socket.on('game:leaderboard', () => {
+  statusText.textContent = 'CLASSIFICA PARZIALE';
+  statusText.style.color = '#a855f7';
+});
+
+socket.on('game:podium', () => {
+  statusText.textContent = '🏆 PODIO FINALE MOSTRATO';
+  statusText.style.color = 'var(--accent-gold)';
+});
+
+socket.on('game:resetToLobby', () => {
+  statusText.textContent = 'LOBBY (In attesa)';
+  statusText.style.color = 'var(--accent-gold)';
+  qIndicator.textContent = '-';
+  answersIndicator.textContent = '0 / 0';
+});
+
 // Control Actions
 document.getElementById('admin-btn-start').addEventListener('click', () => {
   if (confirm('Sei sicuro di voler avviare il quiz azzerando i punteggi?')) {
@@ -41,6 +117,15 @@ document.getElementById('admin-btn-reset').addEventListener('click', () => {
     socket.emit('admin:resetLobby');
   }
 });
+
+const btnClearAll = document.getElementById('admin-btn-clear-all');
+if (btnClearAll) {
+  btnClearAll.addEventListener('click', () => {
+    if (confirm('ATTENZIONE: Sei sicuro di voler cancellare TUTTE le squadre registrate dal database? Dovranno scansionare nuovamente il QR code.')) {
+      socket.emit('admin:clearAllPlayers');
+    }
+  });
+}
 
 // Players management
 const adminPlayersList = document.getElementById('admin-players-list');
