@@ -527,6 +527,352 @@ window.kickPlayer = function(playerId) {
   }
 };
 
+// ==========================================
+// 🗂️ GESTIONE ARCHIVIO STORICO ACCOUNT
+// ==========================================
+const adminAccountCount = document.getElementById('admin-account-count');
+const adminAccountsList = document.getElementById('admin-accounts-list');
+const adminAccountSearch = document.getElementById('admin-account-search');
+const accountFilterButtons = document.querySelectorAll('.admin-account-filter-btn');
+
+const modalEditAccount = document.getElementById('modal-edit-account');
+const modalEditBackdrop = document.getElementById('modal-edit-backdrop');
+const btnCloseEditModal = document.getElementById('btn-close-edit-modal');
+const btnCancelEdit = document.getElementById('btn-cancel-edit');
+const btnSaveEditAccount = document.getElementById('btn-save-edit-account');
+
+const editAccountId = document.getElementById('edit-account-id');
+const editFirstname = document.getElementById('edit-firstname');
+const editLastname = document.getElementById('edit-lastname');
+const editNickname = document.getElementById('edit-nickname');
+const editAvatar = document.getElementById('edit-avatar');
+const editPhone = document.getElementById('edit-phone');
+const editEmail = document.getElementById('edit-email');
+const editCity = document.getElementById('edit-city');
+const editProvince = document.getElementById('edit-province');
+const editRegion = document.getElementById('edit-region');
+const editCountry = document.getElementById('edit-country');
+const editIsUnime = document.getElementById('edit-is-unime');
+const editUnimeFields = document.getElementById('edit-unime-fields');
+const editMatricola = document.getElementById('edit-matricola');
+const editDepartment = document.getElementById('edit-department');
+const editCourse = document.getElementById('edit-course');
+const editYear = document.getElementById('edit-year');
+
+let allHistoricalAccounts = [];
+let accountCurrentFilter = 'all';
+let accountSearchQuery = '';
+
+// Inizializza Regioni e Dipartimenti nel modal di modifica
+function initEditModalDropdowns() {
+  if (editRegion) {
+    editRegion.innerHTML = '';
+    const regions = window.italianRegions || [
+      "Sicilia", "Calabria", "Lazio", "Lombardia", "Campania", "Puglia",
+      "Piemonte", "Veneto", "Emilia-Romagna", "Toscana", "Sardegna", "Liguria",
+      "Marche", "Abruzzo", "Friuli-Venezia Giulia", "Trentino-Alto Adige",
+      "Umbria", "Basilicata", "Molise", "Valle d'Aosta", "Altro / Estero"
+    ];
+    regions.forEach(reg => {
+      const opt = document.createElement('option');
+      opt.value = reg;
+      opt.textContent = reg;
+      editRegion.appendChild(opt);
+    });
+  }
+
+  if (editDepartment) {
+    editDepartment.innerHTML = '<option value="">-- Seleziona Dipartimento --</option>';
+    const depts = window.departmentsData ? Object.keys(window.departmentsData) : [];
+    depts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      editDepartment.appendChild(opt);
+    });
+  }
+}
+
+initEditModalDropdowns();
+
+if (editDepartment) {
+  editDepartment.addEventListener('change', () => {
+    const dept = editDepartment.value;
+    editCourse.innerHTML = '<option value="">-- Seleziona Corso di Laurea --</option>';
+    editYear.innerHTML = '<option value="">-- Prima seleziona il Corso di Laurea --</option>';
+    editYear.disabled = true;
+
+    if (dept && window.departmentsData && window.departmentsData[dept]) {
+      const courses = window.departmentsData[dept];
+      courses.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        editCourse.appendChild(opt);
+      });
+      editCourse.disabled = false;
+    } else {
+      editCourse.disabled = true;
+    }
+  });
+}
+
+if (editCourse) {
+  editCourse.addEventListener('change', () => {
+    const course = editCourse.value;
+    editYear.innerHTML = '<option value="">-- Seleziona Anno di Corso --</option>';
+
+    if (course) {
+      const years = window.getCourseYears ? window.getCourseYears(course) : ['1° Anno', '2° Anno', '3° Anno', 'Fuori Corso'];
+      years.forEach(yr => {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = yr;
+        editYear.appendChild(opt);
+      });
+      editYear.disabled = false;
+    } else {
+      editYear.disabled = true;
+    }
+  });
+}
+
+if (editIsUnime) {
+  editIsUnime.addEventListener('change', () => {
+    if (editUnimeFields) {
+      editUnimeFields.style.display = editIsUnime.checked ? 'flex' : 'none';
+    }
+  });
+}
+
+function closeEditModal() {
+  if (modalEditAccount) modalEditAccount.style.display = 'none';
+}
+
+if (btnCloseEditModal) btnCloseEditModal.addEventListener('click', closeEditModal);
+if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeEditModal);
+if (modalEditBackdrop) modalEditBackdrop.addEventListener('click', closeEditModal);
+
+if (adminAccountSearch) {
+  adminAccountSearch.addEventListener('input', (e) => {
+    accountSearchQuery = e.target.value.toLowerCase().trim();
+    renderAdminAccounts();
+  });
+}
+
+accountFilterButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    accountFilterButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    accountCurrentFilter = btn.getAttribute('data-filter') || 'all';
+    renderAdminAccounts();
+  });
+});
+
+function renderAdminAccounts() {
+  if (!adminAccountsList) return;
+  adminAccountsList.innerHTML = '';
+
+  if (adminAccountCount) adminAccountCount.textContent = allHistoricalAccounts.length;
+
+  let filtered = allHistoricalAccounts.filter(acc => {
+    if (accountCurrentFilter === 'unime' && !acc.isUnime) return false;
+    if (accountCurrentFilter === 'external' && acc.isUnime) return false;
+
+    if (accountSearchQuery) {
+      const searchStr = [
+        acc.nickname || '',
+        acc.firstName || '',
+        acc.lastName || '',
+        acc.email || '',
+        acc.phone || '',
+        acc.matricola || '',
+        acc.department || '',
+        acc.course || '',
+        acc.city || '',
+        acc.province || ''
+      ].join(' ').toLowerCase();
+
+      if (!searchStr.includes(accountSearchQuery)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    adminAccountsList.innerHTML = `
+      <div style="color: rgba(255,255,255,0.6); padding: 24px; text-align: center; background: rgba(0,0,0,0.25); border-radius: 14px;">
+        ${allHistoricalAccounts.length === 0 ? 'Nessun account memorizzato nello storico.' : 'Nessun account trovato per i criteri di ricerca.'}
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(acc => {
+    const card = document.createElement('div');
+    card.className = 'player-admin-card';
+
+    // UniMe Badge
+    let unimeBadge = '';
+    if (acc.isUnime) {
+      const shortDept = window.getDepartmentShortName ? window.getDepartmentShortName(acc.department) : (acc.department || 'UniMe');
+      unimeBadge = `
+        <span class="badge-unime-pill">
+          🎓 ${shortDept} • ${acc.course || 'CdL'} (${acc.academicYear || 'Anno'}) • Matr. ${acc.matricola || 'N/D'}
+        </span>
+      `;
+    } else {
+      unimeBadge = '<span class="badge-external-pill">🌍 Partecipante Esterno</span>';
+    }
+
+    const realName = (acc.firstName || acc.lastName) ? `${acc.firstName || ''} ${acc.lastName || ''}`.trim() : 'Nome non specificato';
+    const regDate = acc.createdAt ? new Date(acc.createdAt).toLocaleDateString('it-IT') : 'Data n/d';
+
+    card.innerHTML = `
+      <div class="player-admin-card-top">
+        <div class="player-admin-info-main">
+          <span style="font-size: 2.2rem;">${acc.avatar || '🎓'}</span>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="font-size: 1.2rem; color: #fff;">${acc.nickname || 'Nickname'}</strong>
+              <span style="color: #cbd5e1; font-size: 0.95rem; font-weight: 600;">(${realName})</span>
+              <span style="font-size: 0.72rem; color: #94a3b8; font-family: var(--font-mono); margin-left: 6px;">ID: ${acc.id}</span>
+            </div>
+            <div style="margin-top: 4px;">
+              ${unimeBadge}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-glass" style="color: var(--accent-gold); border-color: rgba(245, 158, 11, 0.4); padding: 8px 14px; font-size: 0.85rem;" onclick="openEditAccount('${acc.id}')">
+            ✏️ Modifica
+          </button>
+          <button class="btn btn-glass" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4); padding: 8px 14px; font-size: 0.85rem;" onclick="deleteAccount('${acc.id}')">
+            🗑️ Elimina
+          </button>
+        </div>
+      </div>
+
+      <div class="player-admin-meta">
+        <div>
+          <strong>📞 Telefono:</strong> ${acc.phone ? `<a href="tel:${acc.phone}">${acc.phone}</a>` : 'Non indicato'}
+        </div>
+        <div>
+          <strong>✉️ Email:</strong> ${acc.email ? `<a href="mailto:${acc.email}">${acc.email}</a>` : 'Non indicata'}
+        </div>
+        <div>
+          <strong>📍 Residenza:</strong> ${acc.city || ''} ${acc.province ? `(${acc.province})` : ''}, ${acc.region || ''} (${acc.country || 'Italia'})
+        </div>
+        <div>
+          <strong>📅 Registrato il:</strong> ${regDate}
+        </div>
+      </div>
+    `;
+
+    adminAccountsList.appendChild(card);
+  });
+}
+
+// Apertura Modal Modifica Account
+window.openEditAccount = function(accountId) {
+  const acc = allHistoricalAccounts.find(a => a.id === accountId);
+  if (!acc) return;
+
+  editAccountId.value = acc.id;
+  editFirstname.value = acc.firstName || '';
+  editLastname.value = acc.lastName || '';
+  editNickname.value = acc.nickname || '';
+  editAvatar.value = acc.avatar || '🎓';
+  editPhone.value = acc.phone || '';
+  editEmail.value = acc.email || '';
+  editCity.value = acc.city || '';
+  editProvince.value = acc.province || '';
+  editCountry.value = acc.country || 'Italia';
+
+  if (editRegion && acc.region) editRegion.value = acc.region;
+
+  editIsUnime.checked = (acc.isUnime !== false);
+  if (editUnimeFields) {
+    editUnimeFields.style.display = editIsUnime.checked ? 'flex' : 'none';
+  }
+
+  editMatricola.value = acc.matricola || '';
+
+  if (editDepartment && acc.department) {
+    editDepartment.value = acc.department;
+    editDepartment.dispatchEvent(new Event('change'));
+    if (editCourse && acc.course) {
+      editCourse.value = acc.course;
+      editCourse.dispatchEvent(new Event('change'));
+      if (editYear && acc.academicYear) {
+        editYear.value = acc.academicYear;
+      }
+    }
+  }
+
+  modalEditAccount.style.display = 'flex';
+};
+
+// Salvataggio Modifiche Account
+if (btnSaveEditAccount) {
+  btnSaveEditAccount.addEventListener('click', () => {
+    const id = editAccountId.value;
+    if (!id) return;
+
+    const isUni = editIsUnime.checked;
+
+    const updatedData = {
+      id,
+      firstName: editFirstname.value.trim(),
+      lastName: editLastname.value.trim(),
+      nickname: editNickname.value.trim() || `${editFirstname.value.trim()} ${editLastname.value.trim()}`,
+      avatar: editAvatar.value.trim() || '🎓',
+      phone: editPhone.value.trim(),
+      email: editEmail.value.trim(),
+      city: editCity.value.trim(),
+      province: editProvince.value.trim(),
+      region: editRegion.value,
+      country: editCountry.value.trim() || 'Italia',
+      isUnime: isUni,
+      matricola: isUni ? editMatricola.value.trim() : '',
+      department: isUni ? editDepartment.value : '',
+      course: isUni ? editCourse.value : '',
+      academicYear: isUni ? editYear.value : ''
+    };
+
+    socket.emit('admin:updateAccount', updatedData);
+    closeEditModal();
+  });
+}
+
+// Eliminazione definitiva account
+window.deleteAccount = function(accountId) {
+  const acc = allHistoricalAccounts.find(a => a.id === accountId);
+  const nameLabel = acc ? `${acc.firstName} ${acc.lastName} (${acc.nickname})` : accountId;
+  if (confirm(`ATTENZIONE: Sei sicuro di voler eliminare DEFINITIVAMENTE l'account di:\n${nameLabel}?\n\nQuesta operazione cancellerà tutti i suoi dati dal database e disconnetterà il partecipante se connesso.`)) {
+    socket.emit('admin:deleteAccount', { accountId });
+  }
+};
+
+socket.on('admin:accountsUpdated', (accounts) => {
+  allHistoricalAccounts = accounts || [];
+  renderAdminAccounts();
+});
+
+// Caricamento iniziale account via REST API
+async function loadInitialAccounts() {
+  try {
+    const res = await fetch('/api/accounts');
+    if (res.ok) {
+      allHistoricalAccounts = await res.json();
+      renderAdminAccounts();
+    }
+  } catch (e) {
+    console.error('Errore caricamento iniziale account:', e);
+  }
+}
+loadInitialAccounts();
+
 // Questions Management
 let loadedQuestions = [];
 

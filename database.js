@@ -9,7 +9,8 @@ const defaultState = {
   timeRemaining: 20,
   finalRevealStep: 0,
   podiumStep: 0,
-  players: {}, // playerId -> { id, nickname, avatar, score, streak, connected, lastAnswer, lastAnswerTime, lastPointsEarned }
+  players: {}, // playerId -> giocatori nella partita/sessione attiva
+  accounts: {}, // playerId -> archivio storico permanente di tutti i giocatori registrati in passato
   answersCurrentQuestion: {}, // playerId -> optionIndex
   answerStats: [0, 0, 0, 0]
 };
@@ -24,15 +25,23 @@ class Database {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf8');
         const parsed = JSON.parse(raw);
-        console.log(`📦 Database caricato: ${Object.keys(parsed.players || {}).length} giocatori registrati.`);
+        
+        // Carica archivio storico accounts
+        const loadedAccounts = parsed.accounts || {};
 
-        // Al caricamento, resetta connected a false per evitare conteggi fantasma prima della riconnessione dei socket
+        // Al caricamento, resetta connected a false per i giocatori attivi
         const loadedPlayers = {};
         if (parsed.players) {
           for (const [pid, p] of Object.entries(parsed.players)) {
             loadedPlayers[pid] = { ...p, connected: false };
+            // Se non ancora presente nell'archivio storico, sincronizza
+            if (!loadedAccounts[pid]) {
+              loadedAccounts[pid] = { ...p, connected: false };
+            }
           }
         }
+
+        console.log(`📦 Database caricato: ${Object.keys(loadedAccounts).length} account registrati nello storico (${Object.keys(loadedPlayers).length} attivi).`);
 
         return {
           ...defaultState,
@@ -40,6 +49,7 @@ class Database {
           finalRevealStep: parsed.finalRevealStep || 0,
           podiumStep: parsed.podiumStep || 0,
           players: loadedPlayers,
+          accounts: loadedAccounts,
           answersCurrentQuestion: parsed.answersCurrentQuestion || {},
           answerStats: parsed.answerStats || [0, 0, 0, 0]
         };
@@ -59,6 +69,7 @@ class Database {
         finalRevealStep: this.state.finalRevealStep || 0,
         podiumStep: this.state.podiumStep || 0,
         players: this.state.players,
+        accounts: this.state.accounts,
         answersCurrentQuestion: this.state.answersCurrentQuestion,
         answerStats: this.state.answerStats
       };
@@ -69,6 +80,58 @@ class Database {
     } catch (e) {
       console.error('❌ Errore salvataggio db.json:', e);
     }
+  }
+
+  // Registra o aggiorna un account nell'archivio storico
+  upsertAccount(data) {
+    if (!data || !data.id) return null;
+    const pid = data.id;
+    const existing = this.state.accounts[pid] || {};
+
+    const updatedAccount = {
+      ...existing,
+      ...data,
+      id: pid,
+      updatedAt: new Date().toISOString(),
+      createdAt: existing.createdAt || data.createdAt || new Date().toISOString()
+    };
+
+    this.state.accounts[pid] = updatedAccount;
+
+    // Sincronizza anche nel giocatore di sessione se presente
+    if (this.state.players[pid]) {
+      this.state.players[pid] = {
+        ...this.state.players[pid],
+        ...data,
+        id: pid,
+        score: this.state.players[pid].score, // mantieni punteggio partita
+        streak: this.state.players[pid].streak,
+        connected: this.state.players[pid].connected
+      };
+    }
+
+    this.save();
+    return updatedAccount;
+  }
+
+  // Elimina definitivamente un account sia dallo storico che dalla partita
+  deleteAccount(pid) {
+    let deleted = false;
+    if (this.state.accounts && this.state.accounts[pid]) {
+      delete this.state.accounts[pid];
+      deleted = true;
+    }
+    if (this.state.players && this.state.players[pid]) {
+      delete this.state.players[pid];
+      deleted = true;
+    }
+    if (this.state.answersCurrentQuestion && this.state.answersCurrentQuestion[pid] !== undefined) {
+      delete this.state.answersCurrentQuestion[pid];
+    }
+    if (deleted) {
+      this.save();
+    }
+    return deleted;
   }
 
   reset() {
@@ -88,6 +151,7 @@ class Database {
     this.save();
   }
 
+  // Svuota i giocatori dalla partita attiva (gli account storici RIMANGONO intatti!)
   clearPlayers() {
     this.state.players = {};
     this.state.finalRevealStep = 0;

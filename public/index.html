@@ -2,360 +2,543 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description" content="UniMe Level Up - L'interactive info show dal vivo per le matricole dell'Università di Messina. Presentato da Morgana & O.R.U.M. Sfide a colpi di pulsantiera su ERSU, didattica e vita universitaria!">
   <meta name="theme-color" content="#090e1a">
+  <meta property="og:title" content="UniMe Level Up | L'interactive info show per le matricole">
+  <meta property="og:description" content="Il quiz show universitario interattivo dal vivo. Connettiti con lo smartphone, rispondi alle domande e vinci con la tua matricola!">
+  <meta property="og:type" content="website">
   <title>UniMe Level Up | L'interactive info show per le matricole</title>
   <link rel="apple-touch-icon" href="/assets/Morgana.png">
   <link rel="icon" type="image/png" href="/assets/Morgana.png">
+  
+  <!-- FONT & STYLES -->
   <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/player.css">
+  <link rel="stylesheet" href="/css/home.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body>
-  <div class="player-container">
-    <!-- Header Pulsantiera Mobile -->
-    <header class="pulsantiera-header">
-      <div class="pulsantiera-brand">
-        <img src="/assets/Morgana.svg" alt="Morgana" onerror="this.src='/assets/Morgana.png'">
-        <img src="/assets/ORUM.svg" alt="O.R.U.M." onerror="this.src='/assets/ORUM.png'">
-        <span class="pulsantiera-brand-text">MORGANA &amp; O.R.U.M.</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button id="btn-player-fs" class="btn-fs-pill" title="Schermo Intero">
-          ⛶ Schermo Intero
-        </button>
-      </div>
-    </header>
+<body class="home-page">
 
-    <!-- LCD Display della Pulsantiera (visibile quando connesso) -->
-    <div id="lcd-display" class="lcd-screen" style="display: none;">
-      <div class="lcd-player-info">
-        <span id="lcd-avatar" style="font-size: 1.5rem;">🎓</span>
-        <div>
-          <div id="lcd-nickname" class="lcd-player-name">Matricola</div>
-          <div style="font-size: 0.72rem; color: #10b981; font-weight: 700;">● PULSANTIERA CONNESSA</div>
-        </div>
-      </div>
-      <div id="lcd-status-badge" style="padding: 4px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem; color: var(--accent-gold); font-weight: 800; font-family: var(--font-mono);">
-        IN GARA
-      </div>
-    </div>
-
-    <!-- 1. VIEW JOIN & REGISTRAZIONE -->
-    <main id="view-join" class="player-view active">
-      <div class="join-header">
-        <div class="join-logos-badge">
+  <!-- =========================================================================
+       NAVBAR
+       ========================================================================= -->
+  <nav class="home-nav" id="main-nav">
+    <div class="home-nav-inner">
+      <a href="/" class="home-brand" id="brand-link">
+        <div class="home-brand-logos">
           <img src="/assets/Morgana.svg" alt="Morgana" onerror="this.src='/assets/Morgana.png'">
           <img src="/assets/ORUM.svg" alt="O.R.U.M." onerror="this.src='/assets/ORUM.png'">
+          <img src="/assets/unime.svg" alt="UniMe" style="height: 22px; opacity: 0.85;">
         </div>
-        <h1 class="join-title">UNIME LEVEL UP</h1>
-        <p style="color: var(--accent-gold); font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-          L'interactive info show per le matricole
-        </p>
-      </div>
-
-      <form id="form-registration" class="join-card" onsubmit="return false;">
-        
-        <!-- SEZIONE 1: DATI PERSONALI -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <span>👤</span> 1. Dati Personali
-          </div>
-          <div class="form-row-2">
-            <div class="form-field">
-              <label for="input-firstname">Nome <span class="req">*</span></label>
-              <input type="text" id="input-firstname" class="form-input" placeholder="Es. Mario" autocomplete="given-name" required>
-            </div>
-            <div class="form-field">
-              <label for="input-lastname">Cognome <span class="req">*</span></label>
-              <input type="text" id="input-lastname" class="form-input" placeholder="Es. Rossi" autocomplete="family-name" required>
-            </div>
-          </div>
-          <div class="form-row-2">
-            <div class="form-field">
-              <label for="input-phone">Telefono / WhatsApp <span class="req">*</span></label>
-              <input type="tel" id="input-phone" class="form-input" placeholder="Es. 333 1234567" autocomplete="tel" required>
-            </div>
-            <div class="form-field">
-              <label for="input-email">Email <span class="req">*</span></label>
-              <input type="email" id="input-email" class="form-input" placeholder="Es. mario.rossi@email.it" autocomplete="email" required>
-            </div>
-          </div>
+        <div class="home-brand-title">
+          <span>UNIME</span>
+          <span class="brand-red">LEVEL UP</span>
+          <span class="live-pill" id="nav-live-pill"><span class="live-dot"></span> LIVE</span>
         </div>
+      </a>
 
-        <!-- SEZIONE 2: RESIDENZA & PROVENIENZA -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <span>📍</span> 2. Provenienza &amp; Residenza
-          </div>
-          <div class="form-row-2">
-            <div class="form-field">
-              <label for="input-country">Stato <span class="req">*</span></label>
-              <input type="text" id="input-country" class="form-input" value="Italia" placeholder="Italia" required>
-            </div>
-            <div class="form-field">
-              <label for="select-region">Regione <span class="req">*</span></label>
-              <select id="select-region" class="form-select" required>
-                <!-- Popolato da JS -->
-              </select>
-            </div>
-          </div>
-          <div class="form-row-2">
-            <div class="form-field">
-              <label for="input-province">Provincia <span class="req">*</span></label>
-              <input type="text" id="input-province" class="form-input" placeholder="Es. Messina (ME)" required>
-            </div>
-            <div class="form-field">
-              <label for="input-city">Città <span class="req">*</span></label>
-              <input type="text" id="input-city" class="form-input" placeholder="Es. Messina" required>
-            </div>
-          </div>
-        </div>
+      <ul class="home-nav-links">
+        <li><a href="#come-funziona">Come Si Gioca</a></li>
+        <li><a href="#macro-aree">Macro Aree</a></li>
+        <li><a href="#dipartimenti">Dipartimenti</a></li>
+        <li><a href="#ecosistema">Tre Schermi</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
 
-        <!-- SEZIONE 3: ATENEO UNIME -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <span>🏛️</span> 3. Iscrizione Universitaria
-          </div>
-          
-          <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
-            Sei attualmente iscritto all'<strong>Università degli Studi di Messina</strong>?
-          </div>
-
-          <div class="unime-toggle-pills">
-            <button type="button" id="btn-unime-yes" class="unime-toggle-btn active">
-              <span>🎓 SÌ, Studente UniMe</span>
-              <span class="pill-sub">Matricola o iscritto UniMe</span>
-            </button>
-            <button type="button" id="btn-unime-no" class="unime-toggle-btn">
-              <span>🌍 NO, Esterno</span>
-              <span class="pill-sub">Futuro studente o ospite</span>
-            </button>
-          </div>
-
-          <!-- Campi visualizzati solo se Studente UniMe -->
-          <div id="unime-conditional-fields" class="unime-conditional-fields">
-            <div class="form-field">
-              <label for="input-matricola">Numero di Matricola <span class="req">*</span></label>
-              <input type="text" id="input-matricola" class="form-input" placeholder="Es. 543210 (o 'Matricola' se in attesa)" maxlength="16">
-            </div>
-
-            <div class="form-field">
-              <label for="select-department">Dipartimento <span class="req">*</span></label>
-              <select id="select-department" class="form-select">
-                <option value="">-- Seleziona Dipartimento --</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label for="select-course">Corso di Laurea (CdL) <span class="req">*</span></label>
-              <select id="select-course" class="form-select" disabled>
-                <option value="">-- Seleziona prima il Dipartimento --</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label for="select-year">Anno di Corso <span class="req">*</span></label>
-              <select id="select-year" class="form-select" disabled>
-                <option value="">-- Seleziona prima il Corso di Laurea --</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- SEZIONE 4: PULSANTIERA DI GIOCO -->
-        <div class="form-section">
-          <div class="form-section-title">
-            <span>⚡</span> 4. Personalizza la tua Pulsantiera
-          </div>
-
-          <div class="form-field">
-            <label>Scegli il tuo Avatar</label>
-            <div id="avatar-list" class="avatar-selector">
-              <button type="button" class="avatar-btn selected" data-avatar="🎓">🎓</button>
-              <button type="button" class="avatar-btn" data-avatar="🦁">🦁</button>
-              <button type="button" class="avatar-btn" data-avatar="🦉">🦉</button>
-              <button type="button" class="avatar-btn" data-avatar="🦊">🦊</button>
-              <button type="button" class="avatar-btn" data-avatar="⚡">⚡</button>
-              <button type="button" class="avatar-btn" data-avatar="🚀">🚀</button>
-              <button type="button" class="avatar-btn" data-avatar="🍕">🍕</button>
-              <button type="button" class="avatar-btn" data-avatar="🌊">🌊</button>
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label for="input-nickname">Nome Squadra / Nickname Maxischermo</label>
-            <input type="text" id="input-nickname" class="form-input input-nick" placeholder="Es. Mario Rossi o I Fenici" maxlength="16" autocomplete="off">
-            <small style="color: #94a3b8; font-size: 0.76rem; margin-top: 4px;">
-              💡 Nome che apparirà sul maxischermo durante il quiz. Se vuoto, useremo il tuo Nome.
-            </small>
-          </div>
-        </div>
-
-        <!-- BOX MESSAGGI ERRORE -->
-        <div id="join-error-box" class="join-error-box" style="display: none;">
-          <span style="font-size: 1.2rem;">⚠️</span>
-          <span id="join-error-text">Compila tutti i campi obbligatori contrassegnati da *</span>
-        </div>
-
-        <button type="button" id="btn-join" class="btn btn-primary btn-join-giant">
-          COLLEGA PULSANTIERA ⚡
-        </button>
-      </form>
-    </main>
-
-    <!-- 2. VIEW WAITING -->
-    <main id="view-waiting" class="player-view">
-      <div class="waiting-box">
-        <div class="waiting-radar">
-          <span id="my-avatar-display">🎓</span>
-        </div>
-        <h2 id="my-nick-display" class="waiting-title">Pulsantiera Attiva!</h2>
-        <p class="waiting-sub">
-          Guarda il maxischermo: la prossima domanda sta per partire...
-        </p>
-
-        <!-- Riepilogo Profilo Partecipante -->
-        <div id="player-profile-summary" class="profile-summary-card">
-          <div class="profile-summary-header">
-            <span>📋 Profilo Partecipante</span>
-            <span id="summary-badge" style="font-size: 0.72rem; color: #10b981; font-weight: 700;">REGISTRATO</span>
-          </div>
-          <div id="summary-name" style="font-weight: 700; color: #fff;">-</div>
-          <div id="summary-unime-info" style="font-size: 0.82rem; color: var(--accent-gold);">-</div>
-          <div id="summary-geo-info" style="font-size: 0.78rem; color: #94a3b8;">-</div>
-        </div>
-
-        <button id="btn-edit-team" class="btn btn-glass" style="margin-top: 18px; font-size: 0.85rem; padding: 10px 20px;">
-          ✏️ Modifica Dati Profilo
-        </button>
-      </div>
-    </main>
-
-    <!-- 2b. VIEW COUNTDOWN (TIMER INIZIALE SU SMARTPHONE) -->
-    <main id="view-countdown" class="player-view">
-      <div class="phone-countdown-box">
-        <div class="phone-countdown-label">⚡ DOMANDA IN ARRIVO TRA</div>
-        <div id="phone-countdown-number" class="phone-countdown-giant">3</div>
-        <div class="phone-countdown-sub">DITA SUI PULSANTI!</div>
-      </div>
-    </main>
-
-    <!-- 3. VIEW QUESTION (PULSANTIERA 4 TASTI) -->
-    <main id="view-question" class="player-view">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <span id="player-cat-badge" style="font-weight: 800; color: #fca5a5; font-size: 0.95rem; text-transform: uppercase;">Categoria</span>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span id="player-timer-badge" class="player-timer-pill">⏱️ 20s</span>
-          <span id="player-q-counter" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-gold); font-size: 0.95rem;">Q: 1/15</span>
-        </div>
-      </div>
-
-      <div class="player-timer-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 999px; margin-bottom: 14px; overflow: hidden;">
-        <div id="player-timer-fill" style="height: 100%; width: 100%; background: #38bdf8; transition: width 1s linear;"></div>
-      </div>
-
-      <div class="pulsantiera-grid">
-        <button class="arcade-pad-btn btn-0" data-opt="0">
-          <div class="pad-key-number">1</div>
-          <div id="btn-opt-0-text" class="pad-key-text">Opzione 1</div>
-        </button>
-        <button class="arcade-pad-btn btn-1" data-opt="1">
-          <div class="pad-key-number">2</div>
-          <div id="btn-opt-1-text" class="pad-key-text">Opzione 2</div>
-        </button>
-        <button class="arcade-pad-btn btn-2" data-opt="2">
-          <div class="pad-key-number">3</div>
-          <div id="btn-opt-2-text" class="pad-key-text">Opzione 3</div>
-        </button>
-        <button class="arcade-pad-btn btn-3" data-opt="3">
-          <div class="pad-key-number">4</div>
-          <div id="btn-opt-3-text" class="pad-key-text">Opzione 4</div>
-        </button>
-      </div>
-    </main>
-
-    <!-- 4. VIEW ANSWERED -->
-    <main id="view-answered" class="player-view">
-      <div class="answered-card">
-        <div id="answered-icon" style="font-size: 4.5rem; margin-bottom: 16px;">⚡</div>
-        <h2 id="answered-title" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; color: #fff;">
-          RISPOSTA INVIATA!
-        </h2>
-        <p id="answered-subtitle" style="color: #94a3b8; font-size: 1.15rem; max-width: 320px; line-height: 1.4;">
-          Segnale registrato con successo.<br>Guarda il maxischermo per seguire lo show!
-        </p>
-      </div>
-    </main>
-
-    <!-- 5. VIEW ROUND RESULT -->
-    <main id="view-round-result" class="player-view">
-      <div id="result-box" class="round-result-card">
-        <div id="result-emoji" class="result-badge">🎉</div>
-        <h2 id="result-status" class="result-title">ESATTO!</h2>
-        <div id="result-pts" class="result-points">+850 Punti</div>
-        <div id="result-streak" style="margin-bottom: 14px; font-weight: 800; color: #f97316;"></div>
-        <div id="result-rank" class="result-rank-box">POSIZIONE: #3</div>
-      </div>
-    </main>
-
-    <!-- 6. VIEW GAME OVER -->
-    <main id="view-game-over" class="player-view">
-      <div class="waiting-box">
-        <div style="font-size: 5rem; margin-bottom: 16px;">🏆</div>
-        <h2 class="waiting-title">Quiz Concluso!</h2>
-        <p class="waiting-sub" style="margin-bottom: 24px;">
-          Guarda il maxischermo per la proclamazione ufficiale del Podio e dei vincitori!
-        </p>
-      </div>
-    </main>
-
-    <!-- MODAL GUIDA SCHERMO INTERO IPHONE -->
-    <div id="ios-fs-modal" class="ios-fs-modal" style="display: none;">
-      <div class="ios-fs-backdrop"></div>
-      <div class="ios-fs-sheet">
-        <div class="ios-fs-handle"></div>
-        <div class="ios-fs-header">
-          <span style="font-size: 2rem;">📱</span>
-          <div>
-            <h3 class="ios-fs-title">Schermo Intero su iPhone</h3>
-            <p class="ios-fs-sub">Safari per iOS non supporta il fullscreen da pulsante.</p>
-          </div>
-        </div>
-
-        <div class="ios-fs-steps">
-          <div class="ios-step-row">
-            <div class="ios-step-badge">1</div>
-            <div class="ios-step-text">
-              Tocca il tasto <strong>Condividi</strong> in basso al centro in Safari (l'icona quadrata con la freccia in su <strong>⎋</strong>).
-            </div>
-          </div>
-          <div class="ios-step-row">
-            <div class="ios-step-badge">2</div>
-            <div class="ios-step-text">
-              Scorri il menu e tocca <strong>"Aggiungi a schermata Home"</strong>.
-            </div>
-          </div>
-          <div class="ios-step-row">
-            <div class="ios-step-badge">3</div>
-            <div class="ios-step-text">
-              Apri l'icona creata sulla Home: l'app si aprirà a <strong>schermo intero reale al 100%</strong> senza barre del browser!
-            </div>
-          </div>
-        </div>
-
-        <button id="btn-close-ios-modal" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.05rem; border-radius: 14px;">
-          Ho Capito 👍
-        </button>
+      <div class="home-nav-actions">
+        <a href="/admin" class="btn-nav-admin" id="nav-btn-admin" title="Pannello Regia Organizzatori">
+          ⚙️ Regia
+        </a>
+        <a href="/play" class="btn-nav-play" id="nav-btn-play">
+          🎮 Entra nel Quiz
+        </a>
       </div>
     </div>
-  </div>
+  </nav>
 
-  <script src="/js/departmentsData.js"></script>
-  <script src="/js/audio.js"></script>
-  <script src="/js/player.js"></script>
+  <!-- =========================================================================
+       HERO SECTION
+       ========================================================================= -->
+  <header class="hero-section" id="hero">
+    <div class="hero-badge-capsule">
+      🎓 Edizione Matricole • Presentato da Morgana &amp; O.R.U.M.
+    </div>
+
+    <h1 class="hero-title">
+      UNIME <span class="text-gradient-red">LEVEL UP</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      L'interactive info show dal vivo per orientarsi, divertirsi e scalare la classifica delle matricole
+    </p>
+
+    <p class="hero-description">
+      Il format quiz interattivo dal vivo che trasforma l'accoglienza universitaria in un'esperienza unica a colpi di pulsantiera smartphone. Scopri tutto su borse di studio ERSU, didattica, segreteria Esse3, trasporti e vita studentesca a Messina!
+    </p>
+
+    <!-- Gruppo Pulsanti di Accesso Principali -->
+    <div class="hero-cta-group">
+      <a href="/play" class="btn-hero-primary" id="cta-play">
+        <span>🎮</span>
+        <span>ENTRA ORA CON LA PULSANTIERA</span>
+      </a>
+      <a href="/host" class="btn-hero-secondary" id="cta-host">
+        <span>🖥️</span>
+        <span>Maxischermo Host</span>
+      </a>
+      <a href="/admin" class="btn-hero-secondary" id="cta-admin">
+        <span>⚙️</span>
+        <span>Regia &amp; Account</span>
+      </a>
+    </div>
+
+    <!-- Live Status Card (Connessione Realtime con Socket.IO) -->
+    <div class="live-status-card" id="live-status-card">
+      <div class="status-indicator-left">
+        <div class="status-pulsing-badge" id="status-icon">🎮</div>
+        <div style="text-align: left;">
+          <div class="status-text-title" id="status-headline">Stato Sessione Quiz: <span id="status-label" style="color: #f59e0b;">Connessione...</span></div>
+          <div class="status-text-sub" id="status-detail">Connettiti con lo smartphone per partecipare alla partita in sala</div>
+        </div>
+      </div>
+      <div class="status-chips-right">
+        <div class="chip-status" id="chip-players">👥 <span id="count-players">0</span> Giocatori</div>
+        <div class="chip-status" id="chip-questions">📚 <span id="count-questions">20</span> Domande</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       STATISTICHE VELOCI
+       ========================================================================= -->
+  <section class="stats-bar-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value red">400+</div>
+        <div class="stat-label">Domande ponderate nel pool ufficiale</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value gold">13</div>
+        <div class="stat-label">Dipartimenti UniMe rappresentati</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value blue">4</div>
+        <div class="stat-label">Macro aree: ERSU, Didattica, Servizi &amp; Morgana</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value green">0 App</div>
+        <div class="stat-label">100% Web: inquadri il QR dal maxischermo e giochi</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       COME FUNZIONA IL GIOCO
+       ========================================================================= -->
+  <section class="section-wrapper" id="come-funziona">
+    <div class="section-header">
+      <span class="section-tag">Regolamento &amp; Dinamica</span>
+      <h2 class="section-title">Come Funziona il Quiz Show</h2>
+      <p class="section-subtitle">
+        Tre semplici passaggi per sfidare i colleghi di corso e conquistare il podio delle matricole.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-number">01</span>
+        <div class="step-icon">📱</div>
+        <h3 class="step-title">Inquadra il QR &amp; Registrati</h3>
+        <p class="step-desc">
+          Dal maxischermo proiettato in aula magna o su <a href="/play" style="color: #f59e0b; text-decoration: underline;">/play</a>, inserisci il tuo nome, seleziona se sei iscritto a UniMe (con Dipartimento, Corso di Laurea e Anno) e scegli il tuo avatar.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <span class="step-number">02</span>
+        <div class="step-icon">⚡</div>
+        <h3 class="step-title">Pulsantiera Arcade a 4 Colori</h3>
+        <p class="step-desc">
+          Ogni domanda appare sul proiettore con 4 opzioni di risposta abbinate a 4 colori: Rosso, Blu, Giallo e Verde. Più rispondi velocemente e senza errori, più punti accumuli!
+        </p>
+        <div class="arcade-mini-pad">
+          <div class="mini-pad-btn red">▲ ROSSO</div>
+          <div class="mini-pad-btn blue">◆ BLU</div>
+          <div class="mini-pad-btn yellow">● GIALLO</div>
+          <div class="mini-pad-btn green">■ VERDE</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <span class="step-number">03</span>
+        <div class="step-icon">🏆</div>
+        <h3 class="step-title">Serie (Streak) &amp; Podio Finale</h3>
+        <p class="step-desc">
+          Colleziona risposte corrette consecutive per sbloccare i moltiplicatori di serie. A fine partita, la musica e l'animazione stile Champions League incoronano i vincitori sul podio!
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       LE 4 MACRO AREE FORMATIVE
+       ========================================================================= -->
+  <section class="section-wrapper" id="macro-aree">
+    <div class="section-header">
+      <span class="section-tag">I Pilastri della Vita Universitaria</span>
+      <h2 class="section-title">Le 4 Macro Aree del Quiz</h2>
+      <p class="section-subtitle">
+        Tutte le domande sono curate per darti le risposte essenziali che ogni studente dovrebbe conoscere dal primo giorno.
+      </p>
+    </div>
+
+    <div class="areas-grid">
+      <!-- Area 1: ERSU -->
+      <div class="area-card">
+        <div class="area-badge-icon">🏛️</div>
+        <div class="area-body">
+          <h3>1. ERSU Messina &amp; Diritto allo Studio</h3>
+          <p>
+            Borse di studio regionali, accesso alle mense universitarie, posti alloggio presso le residenze, rimborsi trasporti e soglie minime di CFU per evitare la revoca della borsa.
+          </p>
+          <div class="area-tags">
+            <span>Borse di Studio</span>
+            <span>Mensa Universitaria</span>
+            <span>Alloggi</span>
+            <span>CFU Minimi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Area 2: Didattica -->
+      <div class="area-card">
+        <div class="area-badge-icon">📖</div>
+        <div class="area-body">
+          <h3>2. Didattica &amp; Guide UniMe</h3>
+          <p>
+            Come orientarsi sul portale Esse3, verbalizzazione degli esami, calcolo della media ponderata, compilazione del piano di studio, sessioni d'esame e propedeuticità.
+          </p>
+          <div class="area-tags">
+            <span>Portale Esse3</span>
+            <span>Verbalizzazione Esami</span>
+            <span>Piani di Studio</span>
+            <span>CFU vs Voto</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Area 3: Servizi & Campus -->
+      <div class="area-card">
+        <div class="area-badge-icon">🚌</div>
+        <div class="area-body">
+          <h3>3. Servizi, Campus &amp; Vivere a Messina</h3>
+          <p>
+            Abbonamenti scontati ATM bus &amp; tram, biblioteche universitarie, CUS UniMe (impianti sportivi e palestre), WiFi d'ateneo Eduroam e mobilità internazionale Erasmus+.
+          </p>
+          <div class="area-tags">
+            <span>Trasporti ATM</span>
+            <span>CUS Messina</span>
+            <span>WiFi Eduroam</span>
+            <span>Erasmus+</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Area 4: Associazioni -->
+      <div class="area-card">
+        <div class="area-badge-icon">🤝</div>
+        <div class="area-body">
+          <h3>4. Associazionismo, Morgana &amp; O.R.U.M.</h3>
+          <p>
+            La voce e la rappresentanza degli studenti negli organi collegiali di ateneo (Senato Accademico, CdA, Consigli di Dipartimento), supporto matricole, iniziative culturali ed eventi.
+          </p>
+          <div class="area-tags">
+            <span>Associazione Morgana</span>
+            <span>Associazione O.R.U.M.</span>
+            <span>Rappresentanza Studentesca</span>
+            <span>Community</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       DIPARTIMENTI UNIME RAPPRESENTATI
+       ========================================================================= -->
+  <section class="section-wrapper" id="dipartimenti">
+    <div class="section-header">
+      <span class="section-tag">Ateneo Peloritano</span>
+      <h2 class="section-title">I 13 Dipartimenti di UniMe</h2>
+      <p class="section-subtitle">
+        Ogni studente compete portando in alto il proprio dipartimento e corso di laurea.
+      </p>
+    </div>
+
+    <div class="dept-pills-container">
+      <div class="dept-pill">🏛️ Civiltà Antiche e Moderne (DICAM)</div>
+      <div class="dept-pill">⚖️ Giurisprudenza</div>
+      <div class="dept-pill">📈 Economia (DIECII)</div>
+      <div class="dept-pill">🔬 Scienze Chimiche, Biologiche, Farmaceutiche (CHIBIOFARAM)</div>
+      <div class="dept-pill">🩺 Medicina Clinica e Sperimentale</div>
+      <div class="dept-pill">🧠 Scienze Cognitive, Psicologiche, Pedagogiche (COSMO)</div>
+      <div class="dept-pill">🧪 Scienze Biomediche, Odontoiatriche, Morfologiche (BIOMORF)</div>
+      <div class="dept-pill">⚙️ Ingegneria</div>
+      <div class="dept-pill">📐 Scienze Matematiche e Informatiche, Fisiche (MIFT)</div>
+      <div class="dept-pill">🐾 Scienze Veterinarie</div>
+      <div class="dept-pill">🌍 Scienze Politiche e Giuridiche</div>
+      <div class="dept-pill">🏥 Patologia Umana dell'Adulto e dell'Età Evolutiva</div>
+      <div class="dept-pill">📚 Scienze della Formazione</div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       I TRE SCHERMI DELL'ECOSISTEMA
+       ========================================================================= -->
+  <section class="section-wrapper" id="ecosistema">
+    <div class="section-header">
+      <span class="section-tag">Architettura &amp; Tecnologia</span>
+      <h2 class="section-title">L'Ecosistema a Tre Schermi</h2>
+      <p class="section-subtitle">
+        Progettato per funzionare in sincronia istantanea via WebSocket durante eventi in presenza e aule gremite.
+      </p>
+    </div>
+
+    <div class="screens-grid">
+      <!-- Card 1: Player Controller -->
+      <div class="screen-card featured">
+        <div class="screen-icon-box">📱</div>
+        <h3 class="screen-card-title">Pulsantiera Giocatore</h3>
+        <div class="screen-card-target">Smartphone del Partecipante</div>
+        <p class="screen-card-desc">
+          Trasforma ogni smartphone in un controller tattile stile arcade. Nessuna app da installare, zero lag e salvataggio automatico del profilo giocatore.
+        </p>
+        <ul class="screen-card-features">
+          <li>✓ 4 pulsanti arcade con feedback e suoni</li>
+          <li>✓ Gestione profilo con Dipartimento e CdL</li>
+          <li>✓ Diritto alla modifica o cancellazione account</li>
+        </ul>
+        <a href="/play" class="screen-card-btn btn-card-play">
+          Apri Pulsantiera Mobile →
+        </a>
+      </div>
+
+      <!-- Card 2: Host Screen -->
+      <div class="screen-card">
+        <div class="screen-icon-box">🖥️</div>
+        <h3 class="screen-card-title">Maxischermo Host</h3>
+        <div class="screen-card-target">Videoproiettore dell'Aula</div>
+        <p class="screen-card-desc">
+          Interfaccia televisiva a schermo intero con QR Code gigante, lobby d'attesa dinamica, countdown sincrono a tutto schermo e podio animato stile Champions League.
+        </p>
+        <ul class="screen-card-features">
+          <li>✓ QR code automatico con IP locale</li>
+          <li>✓ Countdown e statistiche risposte della sala</li>
+          <li>✓ Podio con coriandoli e colonna sonora</li>
+        </ul>
+        <a href="/host" class="screen-card-btn btn-card-host">
+          Apri Maxischermo Host →
+        </a>
+      </div>
+
+      <!-- Card 3: Admin Dashboard -->
+      <div class="screen-card">
+        <div class="screen-icon-box">🎛️</div>
+        <h3 class="screen-card-title">Regia &amp; Archivio Account</h3>
+        <div class="screen-card-target">Control Room Organizzatori</div>
+        <p class="screen-card-desc">
+          Pannello di comando completo per la regia: prompter conduttore, avanzamento domande, archivio permanente storico con modifica o eliminazione account ed export CSV.
+        </p>
+        <ul class="screen-card-features">
+          <li>✓ Archivio storico partecipanti permanente</li>
+          <li>✓ Modifica qualsiasi campo o elimina account</li>
+          <li>✓ Estrazione ponderata 20 domande da pool di 400</li>
+        </ul>
+        <a href="/admin" class="screen-card-btn btn-card-admin">
+          Accedi alla Regia →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       FAQ PER LE MATRICOLE
+       ========================================================================= -->
+  <section class="section-wrapper" id="faq">
+    <div class="section-header">
+      <span class="section-tag">Domande Frequenti</span>
+      <h2 class="section-title">Hai Domande sul Gioco?</h2>
+      <p class="section-subtitle">
+        Ecco tutto ciò che devi sapere prima di premere il primo pulsante.
+      </p>
+    </div>
+
+    <div class="faq-grid">
+      <div class="faq-card">
+        <h4 class="faq-q"><span>❓</span> Devo scaricare un'applicazione?</h4>
+        <p class="faq-a">
+          Assolutamente no! Ti basta inquadrare il codice QR sul maxischermo con la fotocamera del tuo cellulare o digitare il link per entrare istantaneamente dalla pagina web.
+        </p>
+      </div>
+
+      <div class="faq-card">
+        <h4 class="faq-q"><span>📶</span> Cosa succede se perdo la connessione?</h4>
+        <p class="faq-a">
+          Nessun problema: il sistema conserva il tuo profilo e punteggio nella memoria del browser. Non appena la connessione torna attiva, la pulsantiera si ricollega in automatico.
+        </p>
+      </div>
+
+      <div class="faq-card">
+        <h4 class="faq-q"><span>🔒</span> Come vengono trattati i miei dati?</h4>
+        <p class="faq-a">
+          I dati raccolti servono esclusivamente per l'esperienza del quiz e le comunicazioni universitarie delle associazioni Morgana e O.R.U.M. Puoi richiedere la modifica o la cancellazione permanente del tuo account in qualunque momento.
+        </p>
+      </div>
+
+      <div class="faq-card">
+        <h4 class="faq-q"><span>👥</span> Possono partecipare studenti di altri atenei?</h4>
+        <p class="faq-a">
+          Certamente! Nel modulo di registrazione è presente l'opzione per chi non è iscritto all'Università di Messina, permettendo a chiunque di divertirsi e mettersi alla prova.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       FOOTER
+       ========================================================================= -->
+  <footer class="home-footer">
+    <div class="footer-inner">
+      <div class="footer-brand-col">
+        <div class="footer-logos">
+          <img src="/assets/Morgana.svg" alt="Associazione Morgana" onerror="this.src='/assets/Morgana.png'">
+          <img src="/assets/ORUM.svg" alt="Associazione O.R.U.M." onerror="this.src='/assets/ORUM.png'">
+          <img src="/assets/unime.svg" alt="UniMe" style="height: 30px; opacity: 0.9;">
+        </div>
+        <p class="footer-desc">
+          <strong>UniMe Level Up</strong> è un'iniziativa ideata e promossa dalle associazioni studentesche <strong>Morgana</strong> e <strong>O.R.U.M.</strong> per accogliere, orientare e valorizzare le matricole dell'Università degli Studi di Messina.
+        </p>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Accesso Rapido</h4>
+        <ul class="footer-links-list">
+          <li><a href="/play">🎮 Pulsantiera Giocatore</a></li>
+          <li><a href="/host">🖥️ Maxischermo Host</a></li>
+          <li><a href="/admin">⚙️ Regia &amp; Archivio</a></li>
+          <li><a href="/api/accounts/export-csv">📥 Esporta Database (CSV)</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Community &amp; Social</h4>
+        <ul class="footer-links-list">
+          <li><a href="https://www.instagram.com/associazionemorgana" target="_blank" rel="noopener">📸 Instagram Morgana</a></li>
+          <li><a href="https://www.instagram.com/orum.unime" target="_blank" rel="noopener">📸 Instagram O.R.U.M.</a></li>
+          <li><a href="https://www.morganaorum.it" target="_blank" rel="noopener">🌐 Portale Morgana &amp; O.R.U.M.</a></li>
+          <li><a href="https://www.unime.it" target="_blank" rel="noopener">🎓 Università di Messina</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>
+        &copy; 2024-2025 Associazione Morgana &amp; Associazione O.R.U.M. • Tutti i diritti riservati.
+      </div>
+      <div>
+        Sviluppato per gli studenti dell'Università degli Studi di Messina
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT DI AGGIORNAMENTO DINAMICO STATO VIA SOCKET.IO -->
+  <script>
+    (function() {
+      const socket = io();
+      const statusLabel = document.getElementById('status-label');
+      const statusHeadline = document.getElementById('status-headline');
+      const statusDetail = document.getElementById('status-detail');
+      const statusIcon = document.getElementById('status-icon');
+      const countPlayers = document.getElementById('count-players');
+      const countQuestions = document.getElementById('count-questions');
+      const navLivePill = document.getElementById('nav-live-pill');
+
+      socket.on('connect', () => {
+        if (statusLabel) {
+          statusLabel.textContent = '🟢 Server Online';
+          statusLabel.style.color = '#10b981';
+        }
+      });
+
+      socket.on('disconnect', () => {
+        if (statusLabel) {
+          statusLabel.textContent = '🔴 Disconnesso';
+          statusLabel.style.color = '#ef4444';
+        }
+      });
+
+      socket.on('syncState', (state) => {
+        if (!state) return;
+        if (countPlayers && state.playersCount !== undefined) {
+          countPlayers.textContent = state.playersCount;
+        }
+        if (countQuestions && state.totalQuestions !== undefined) {
+          countQuestions.textContent = state.totalQuestions;
+        }
+
+        if (statusDetail && statusLabel) {
+          switch(state.status) {
+            case 'LOBBY':
+              statusLabel.textContent = 'Lobby d\'Attesa';
+              statusLabel.style.color = '#f59e0b';
+              statusIcon.textContent = '⏳';
+              statusDetail.textContent = 'La stanza è aperta: inquadra il QR sul maxischermo o premi "Entra nel Quiz"!';
+              break;
+            case 'QUESTION':
+              statusLabel.textContent = `In Gara: Domanda ${(state.currentQuestionIndex || 0) + 1}/${state.totalQuestions || 20}`;
+              statusLabel.style.color = '#ef4444';
+              statusIcon.textContent = '⚡';
+              statusDetail.textContent = 'Rispondi subito sulla tua pulsantiera mobile!';
+              break;
+            case 'LEADERBOARD':
+              statusLabel.textContent = 'Classifica Live';
+              statusLabel.style.color = '#3b82f6';
+              statusIcon.textContent = '📊';
+              statusDetail.textContent = 'I concorrenti stanno consultando i punteggi aggiornati.';
+              break;
+            case 'PODIUM':
+            case 'FINAL_REVEAL':
+              statusLabel.textContent = 'Podio Finale';
+              statusLabel.style.color = '#f59e0b';
+              statusIcon.textContent = '🏆';
+              statusDetail.textContent = 'Gran finale con proclamazione dei vincitori!';
+              break;
+            default:
+              statusLabel.textContent = state.status || 'Pronto';
+          }
+        }
+      });
+
+      // Carica il conteggio domande e statistiche iniziali via REST
+      fetch('/api/questions')
+        .then(r => r.json())
+        .then(q => {
+          if (Array.isArray(q) && countQuestions) {
+            countQuestions.textContent = q.length;
+          }
+        })
+        .catch(() => {});
+
+      fetch('/api/players')
+        .then(r => r.json())
+        .then(p => {
+          if (Array.isArray(p) && countPlayers) {
+            countPlayers.textContent = p.filter(x => x.connected).length;
+          }
+        })
+        .catch(() => {});
+    })();
+  </script>
+
 </body>
 </html>

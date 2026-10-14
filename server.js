@@ -83,10 +83,11 @@ app.get('/api/network', async (req, res) => {
   const localUrl = `http://${primaryIp}:${PORT}`;
   
   const clientOrigin = req.query.origin;
-  const url = customPublicUrl || clientOrigin || detectedPublicUrl || localUrl;
+  const baseUrl = customPublicUrl || clientOrigin || detectedPublicUrl || localUrl;
+  const playUrl = `${baseUrl.replace(/\/+$/, '')}/play`;
 
   try {
-    const qrDataUrl = await QRCode.toDataURL(url, {
+    const qrDataUrl = await QRCode.toDataURL(playUrl, {
       margin: 2,
       scale: 8,
       color: {
@@ -94,17 +95,19 @@ app.get('/api/network', async (req, res) => {
         light: '#ffffff'
       }
     });
-    res.json({ ips, port: PORT, url, qrDataUrl });
+    res.json({ ips, port: PORT, url: playUrl, baseUrl, qrDataUrl });
   } catch (err) {
-    res.json({ ips, port: PORT, url, qrDataUrl: '' });
+    res.json({ ips, port: PORT, url: playUrl, baseUrl, qrDataUrl: '' });
   }
 });
 
 app.post('/api/set-url', (req, res) => {
   const { url } = req.body;
   customPublicUrl = url || '';
-  io.emit('network:updated', { url: customPublicUrl || `http://${getLocalIpAddresses()[0] || 'localhost'}:${PORT}` });
-  res.json({ success: true, url: customPublicUrl });
+  const effectiveBase = customPublicUrl || `http://${getLocalIpAddresses()[0] || 'localhost'}:${PORT}`;
+  const effectivePlayUrl = `${effectiveBase.replace(/\/+$/, '')}/play`;
+  io.emit('network:updated', { url: effectivePlayUrl, baseUrl: effectiveBase });
+  res.json({ success: true, url: customPublicUrl, playUrl: effectivePlayUrl });
 });
 
 app.get('/api/questions', (req, res) => {
@@ -142,6 +145,14 @@ app.post('/api/questions', (req, res) => {
 });
 
 // Pagine principali
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/play', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'play.html'));
+});
+
 app.get('/host', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
@@ -150,7 +161,83 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// API Partecipanti & Export CSV Registrazioni
+// API Archivio Storico Account (Permanenti)
+app.get('/api/accounts', (req, res) => {
+  res.json(Object.values(gameState.accounts || {}));
+});
+
+app.post('/api/accounts/:id', (req, res) => {
+  const { id } = req.params;
+  const updated = db.upsertAccount({ ...req.body, id });
+  if (updated) {
+    emitPlayersUpdated();
+    io.to(id).emit('player:accountUpdated', updated);
+    res.json({ success: true, account: updated });
+  } else {
+    res.status(404).json({ error: 'Account non trovato' });
+  }
+});
+
+app.delete('/api/accounts/:id', (req, res) => {
+  const { id } = req.params;
+  const deleted = db.deleteAccount(id);
+  if (deleted) {
+    io.to(id).emit('player:accountDeleted');
+    emitPlayersUpdated();
+    sendSyncState();
+    res.json({ success: true, id });
+  } else {
+    res.status(404).json({ error: 'Account non trovato' });
+  }
+});
+
+// Export CSV Archivio Completo Account o Partita Corrente
+app.get('/api/accounts/export-csv', (req, res) => {
+  const accounts = Object.values(gameState.accounts || {});
+  
+  const headers = [
+    'ID', 'Nome', 'Cognome', 'Nickname Gioco', 'Telefono', 'Email',
+    'Stato', 'Regione', 'Provincia', 'Città',
+    'Iscritto UniMe', 'Matricola', 'Dipartimento', 'Corso di Laurea', 'Anno di Corso',
+    'Avatar', 'Data Registrazione', 'Ultimo Aggiornamento'
+  ];
+
+  function escapeCsv(val) {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  }
+
+  const rows = accounts.map(a => [
+    escapeCsv(a.id),
+    escapeCsv(a.firstName || ''),
+    escapeCsv(a.lastName || ''),
+    escapeCsv(a.nickname || ''),
+    escapeCsv(a.phone || ''),
+    escapeCsv(a.email || ''),
+    escapeCsv(a.country || 'Italia'),
+    escapeCsv(a.region || ''),
+    escapeCsv(a.province || ''),
+    escapeCsv(a.city || ''),
+    escapeCsv(a.isUnime ? 'SÌ' : 'NO'),
+    escapeCsv(a.matricola || ''),
+    escapeCsv(a.department || ''),
+    escapeCsv(a.course || ''),
+    escapeCsv(a.academicYear || ''),
+    escapeCsv(a.avatar || ''),
+    escapeCsv(a.createdAt || ''),
+    escapeCsv(a.updatedAt || '')
+  ].join(','));
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const filename = `archivio_account_unime_${new Date().toISOString().slice(0, 10)}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(csvContent);
+});
+
+// API Partecipanti Attivi nella Sessione
 app.get('/api/players', (req, res) => {
   res.json(Object.values(gameState.players));
 });
@@ -206,8 +293,10 @@ app.get('/api/players/export-csv', (req, res) => {
 function emitPlayersUpdated() {
   const allPlayers = Object.values(gameState.players);
   const activePlayers = allPlayers.filter(p => p.connected);
+  const allAccounts = Object.values(gameState.accounts || {});
   io.emit('host:playersUpdated', activePlayers);
   io.emit('admin:playersUpdated', allPlayers);
+  io.emit('admin:accountsUpdated', allAccounts);
 }
 
 // Helper: invia syncState completo a un socket o a tutti
@@ -557,6 +646,7 @@ io.on('connection', (socket) => {
       console.log(`👤 Nuovo giocatore registrato: ${cleanNick} (${player.firstName} ${player.lastName} - ${player.isUnime ? 'UniMe ' + player.department : 'Esterno'}) [${pid}]`);
     }
 
+    db.upsertAccount(player);
     db.save(); // PERSISTE SUBITO SU DISCO
     emitPlayersUpdated();
     sendSyncState();
@@ -831,6 +921,40 @@ io.on('connection', (socket) => {
       if (gameState.answersCurrentQuestion) delete gameState.answersCurrentQuestion[playerId];
       db.save();
       io.to(playerId).emit('player:kicked');
+      emitPlayersUpdated();
+      sendSyncState();
+    }
+  });
+
+  // Gestione Account permanente (Modifica & Cancellazione)
+  socket.on('admin:updateAccount', (accountData) => {
+    if (!accountData || !accountData.id) return;
+    const updated = db.upsertAccount(accountData);
+    if (updated) {
+      console.log(`✏️ [Admin Socket] Account ${updated.id} (${updated.nickname}) modificato con successo.`);
+      io.to(updated.id).emit('player:accountUpdated', updated);
+      emitPlayersUpdated();
+      sendSyncState();
+    }
+  });
+
+  socket.on('admin:deleteAccount', ({ accountId }) => {
+    if (!accountId) return;
+    console.log(`🗑️ [Admin Socket] Eliminazione account definitivo: ${accountId}`);
+    const deleted = db.deleteAccount(accountId);
+    if (deleted) {
+      io.to(accountId).emit('player:accountDeleted');
+      emitPlayersUpdated();
+      sendSyncState();
+    }
+  });
+
+  socket.on('player:deleteMyAccount', ({ playerId } = {}) => {
+    const pid = playerId || socketToPlayerId[socket.id];
+    if (pid) {
+      console.log(`🗑️ [Player Socket] Giocatore ${pid} ha cancellato il proprio profilo.`);
+      db.deleteAccount(pid);
+      socket.emit('player:accountDeleted');
       emitPlayersUpdated();
       sendSyncState();
     }

@@ -368,3 +368,50 @@
   font-weight: 700;
 }
 
+/* Modal Modifica Account Admin */
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.admin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 7, 15, 0.85);
+  backdrop-filter: blur(6px);
+}
+
+.admin-modal-card {
+  position: relative;
+  z-index: 2;
+  background: #0d1424;
+  border: 1px solid var(--accent-gold);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 25px rgba(245, 158, 11, 0.2);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
