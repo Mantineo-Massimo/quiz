@@ -4867,33 +4867,33 @@
     "id": 305,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "In quale via di Messina è nata nel 2012 l'Associazione Morgana?",
+    "question": "Cosa si intende per 'Bando Alloggi e Posti Letto' promosso dall'ERSU di Messina?",
     "options": [
-      "Via Santa Elia",
-      "Via Del Vespro",
-      "Viale Annunziata",
-      "Via Garibaldi"
+      "L'assegnazione di alloggi presso le residenze universitarie per studenti fuori sede idonei",
+      "Un concorso per comprare una casa",
+      "L'affitto di tende da campeggio",
+      "La vendita di immobili dell'Ateneo"
     ],
-    "correctText": "Via Del Vespro",
-    "correctIndex": 1,
+    "correctText": "L'assegnazione di alloggi presso le residenze universitarie per studenti fuori sede idonei",
+    "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: Via Del Vespro"
+    "explanation": "Risposta corretta: L'assegnazione di alloggi presso le residenze universitarie per studenti fuori sede idonei"
   },
   {
     "id": 306,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Qual è l'indirizzo della Sede Operativa Comune di Morgana e O.R.U.M.?",
+    "question": "Cosa garantisce l'abbonamento speciale studenti UniMe con ATM Messina?",
     "options": [
-      "Via Del Vespro n°57",
-      "Via Santa Elia 11, 98122 Messina",
-      "Contrada Petraro Top Residence Ganzirri",
-      "Piazza Pugliatti 1"
+      "La libera circolazione su tutti i bus e tram urbani della città per l'intero anno accademico",
+      "Solo 2 corse al mese",
+      "Viaggi gratis sui treni ad alta velocità",
+      "L'uso gratuito delle autostrade"
     ],
-    "correctText": "Via Santa Elia 11, 98122 Messina",
-    "correctIndex": 1,
+    "correctText": "La libera circolazione su tutti i bus e tram urbani della città per l'intero anno accademico",
+    "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: Via Santa Elia 11, 98122 Messina"
+    "explanation": "Risposta corretta: La libera circolazione su tutti i bus e tram urbani della città per l'intero anno accademico"
   },
   {
     "id": 307,
@@ -4915,49 +4915,49 @@
     "id": 308,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Dove si trova la sede legale dell'Associazione Morgana?",
+    "question": "In che anno è stata fondata l'Università degli Studi di Messina (Studium Generale) con la bolla papale di Papa Paolo III?",
     "options": [
-      "Via Santa Elia 11",
-      "Via Del Vespro n°57, 98123 Messina",
-      "Viale Ferdinando Stagno d'Alcontres",
-      "Corso Cavour 10"
+      "1548",
+      "1861",
+      "1920",
+      "1492"
     ],
-    "correctText": "Via Del Vespro n°57, 98123 Messina",
-    "correctIndex": 1,
+    "correctText": "1548",
+    "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: Via Del Vespro n°57, 98123 Messina"
+    "explanation": "Risposta corretta: 1548 (fondazione storica dell'Ateneo peloritano)"
   },
   {
     "id": 309,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Dove si trova la sede legale dell'Associazione O.R.U.M.?",
+    "question": "Dove si trova la sede storica e centrale del Rettorato dell'Università di Messina?",
     "options": [
-      "Contrada Petraro Top Residence Ganzirri, 98165 Messina",
-      "Via Del Vespro n°57",
-      "Via Santa Elia 11",
-      "Policlinico Padiglione F"
+      "Piazza Salvatore Pugliatti 1",
+      "Polo Universitario Papardo",
+      "Polo Universitario Annunziata",
+      "Viale Giostra"
     ],
-    "correctText": "Contrada Petraro Top Residence Ganzirri, 98165 Messina",
+    "correctText": "Piazza Salvatore Pugliatti 1",
     "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: Contrada Petraro Top Residence Ganzirri, 98165 Messina"
+    "explanation": "Risposta corretta: Piazza Salvatore Pugliatti 1 (sede del Rettorato e di Giurisprudenza ed Economia)"
   },
   {
     "id": 310,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Qual è l'e-mail di contatto ufficiale delle associazioni?",
+    "question": "Che tipo di assistenza gratuita offrono le associazioni studentesche durante le immatricolazioni universitarie?",
     "options": [
-      "info@unime.it",
-      "segreteria@morganaorum.it",
-      "morgana.orum@gmail.com",
-      "rappresentanza@unime.it"
+      "Supporto per la compilazione della domanda, calcolo delle tasse e orientamento alle matricole",
+      "Rilascio diretto del diploma di maturità",
+      "Pagamento delle tasse d'iscrizione a carico dell'associazione",
+      "Vendita obbligatoria di dispense didattiche"
     ],
-    "correctText": "segreteria@morganaorum.it",
-    "correctIndex": 1,
+    "correctText": "Supporto per la compilazione della domanda, calcolo delle tasse e orientamento alle matricole",
+    "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: segreteria@morganaorum.it"
+    "explanation": "Risposta corretta: Supporto per la compilazione della domanda, calcolo delle tasse e orientamento alle matricole"
   },
   {
     "id": 311,
@@ -5043,17 +5043,17 @@
     "id": 316,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Chi cura la gestione tecnica e privacy manager del portale morganaorum.it?",
+    "question": "Qual è il compito del Senato Accademico dell'Università di Messina?",
     "options": [
-      "Massimo Mantineo",
-      "Gaetano Martino",
-      "Francesco Maurolico",
-      "Pietro Castelli"
+      "È l'organo di governo che coordina la didattica, la ricerca e la programmazione accademica",
+      "Gestisce esclusivamente la biglietteria degli autobus",
+      "È l'ufficio che stampa i certificati cartacei",
+      "È la mensa centrale dei docenti"
     ],
-    "correctText": "Massimo Mantineo",
+    "correctText": "È l'organo di governo che coordina la didattica, la ricerca e la programmazione accademica",
     "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: Massimo Mantineo"
+    "explanation": "Risposta corretta: È l'organo di governo che coordina la didattica, la ricerca e la programmazione accademica"
   },
   {
     "id": 317,
@@ -5123,33 +5123,33 @@
     "id": 321,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Quale canale social è indicato sul sito per contattare direttamente l'Associazione Morgana?",
+    "question": "Quale piattaforma online ufficiale utilizzano gli studenti UniMe per prenotare gli appelli d'esame e gestire la carriera accademica?",
     "options": [
-      "@associazione.morgana_",
-      "@morgana_official",
-      "@unime_morgana",
-      "@associazione_morgana_messina"
+      "ESSE3",
+      "Google Classroom",
+      "Moodle Didattica",
+      "WhatsApp Web"
     ],
-    "correctText": "@associazione.morgana_",
+    "correctText": "ESSE3",
     "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: @associazione.morgana_"
+    "explanation": "Risposta corretta: ESSE3 è il gestionale della segreteria virtuale e del libretto elettronico di UniMe"
   },
   {
     "id": 322,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Qual è il tag Instagram ufficiale dell'Associazione O.R.U.M.?",
+    "question": "Quanti Crediti Formativi Universitari (CFU) sono previsti complessivamente in un corso di Laurea Magistrale Biennale (2 anni)?",
     "options": [
-      "@orum.messina",
-      "@orum.unime",
-      "@orum_associazione",
-      "@orum_official_page"
+      "60 CFU",
+      "120 CFU",
+      "180 CFU",
+      "300 CFU"
     ],
-    "correctText": "@orum.unime",
+    "correctText": "120 CFU",
     "correctIndex": 1,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: @orum.unime"
+    "explanation": "Risposta corretta: 120 CFU (60 CFU per ciascun anno accademico)"
   },
   {
     "id": 323,
@@ -5171,33 +5171,33 @@
     "id": 324,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Qual è il Codice Fiscale dell'Associazione Morgana riportato nei dati legali?",
+    "question": "Cos'è la 'No Tax Area' per gli studenti iscritti all'Università di Messina?",
     "options": [
-      "97103490831",
-      "27068650833",
-      "80004200834",
-      "01234567890"
+      "L'esonero totale dal contributo onnicomprensivo universitario per gli studenti con ISEE inferiore alla soglia stabilita",
+      "Un'area del campus in cui non si paga il parcheggio",
+      "Uno sconto riservato solo agli studenti fuori corso",
+      "Un buono acquisto per libri universitari"
     ],
-    "correctText": "97103490831",
+    "correctText": "L'esonero totale dal contributo onnicomprensivo universitario per gli studenti con ISEE inferiore alla soglia stabilita",
     "correctIndex": 0,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: 97103490831"
+    "explanation": "Risposta corretta: L'esonero totale dal contributo onnicomprensivo universitario per gli studenti con ISEE inferiore alla soglia stabilita"
   },
   {
     "id": 325,
     "macroArea": "Associazione Morgana & O.R.U.M.",
     "category": "Morgana: Storia & Identità",
-    "question": "Qual è il Codice Fiscale dell'Associazione O.R.U.M.?",
+    "question": "Quanti Crediti Formativi Universitari (CFU) prevede complessivamente il piano di studi di una Laurea Triennale?",
     "options": [
-      "97103490831",
-      "27068650833",
-      "90012345678",
-      "11223344556"
+      "120 CFU",
+      "180 CFU",
+      "240 CFU",
+      "300 CFU"
     ],
-    "correctText": "27068650833",
+    "correctText": "180 CFU",
     "correctIndex": 1,
     "timeLimit": 20,
-    "explanation": "Risposta corretta: 27068650833"
+    "explanation": "Risposta corretta: 180 CFU (60 CFU per ciascuno dei tre anni accademici)"
   },
   {
     "id": 326,

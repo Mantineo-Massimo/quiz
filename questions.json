@@ -104,36 +104,36 @@
   {
     "id": 7,
     "poolId": 321,
-    "macroArea": "Associazione Morgana & O.R.U.M.",
-    "category": "Morgana: Storia & Identità",
-    "question": "Quale canale social è indicato sul sito per contattare direttamente l'Associazione Morgana?",
+    "macroArea": "Servizi, Mobilità & Ateneo",
+    "category": "Carriera e Piattaforme Digitali",
+    "question": "Quale piattaforma online ufficiale utilizzano gli studenti UniMe per prenotare gli appelli d'esame e gestire la carriera accademica?",
     "options": [
-      "@morgana_official",
-      "@associazione.morgana_",
-      "@unime_morgana",
-      "@associazione_morgana_messina"
+      "ESSE3",
+      "Google Classroom",
+      "Moodle Didattica",
+      "WhatsApp Web"
     ],
-    "correctIndex": 1,
-    "correctText": "@associazione.morgana_",
+    "correctIndex": 0,
+    "correctText": "ESSE3",
     "timeLimit": 20,
-    "explanation": "Risposta corretta: @associazione.morgana_"
+    "explanation": "Risposta corretta: ESSE3 è il gestionale della segreteria virtuale e del libretto elettronico di UniMe"
   },
   {
     "id": 8,
     "poolId": 325,
-    "macroArea": "Associazione Morgana & O.R.U.M.",
-    "category": "Morgana: Storia & Identità",
-    "question": "Qual è il Codice Fiscale dell'Associazione O.R.U.M.?",
+    "macroArea": "Didattica & Guide UniMe",
+    "category": "CFU e Percorsi di Laurea",
+    "question": "Quanti Crediti Formativi Universitari (CFU) prevede complessivamente il piano di studi di una Laurea Triennale?",
     "options": [
-      "27068650833",
-      "11223344556",
-      "90012345678",
-      "97103490831"
+      "120 CFU",
+      "180 CFU",
+      "240 CFU",
+      "300 CFU"
     ],
-    "correctIndex": 0,
-    "correctText": "27068650833",
+    "correctIndex": 1,
+    "correctText": "180 CFU",
     "timeLimit": 20,
-    "explanation": "Risposta corretta: 27068650833"
+    "explanation": "Risposta corretta: 180 CFU (60 CFU per ciascuno dei tre anni accademici)"
   },
   {
     "id": 9,

@@ -973,7 +973,12 @@ function renderQuestionsList() {
           ${macroBadge}
           <span style="font-weight: 800; color: var(--unime-gold);">#${idx + 1} • ${q.category}</span>
         </div>
-        <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">${q.timeLimit || 20}s</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">${q.timeLimit || 20}s</span>
+          <button class="btn btn-glass btn-edit-question" data-index="${idx}" style="padding: 4px 12px; font-size: 0.82rem; background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fbbf24; font-weight: 700; cursor: pointer;">
+            ✏️ Modifica
+          </button>
+        </div>
       </div>
       <div style="font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; color: #fff;">${q.question}</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem;">
@@ -986,6 +991,109 @@ function renderQuestionsList() {
       ${q.explanation ? `<div style="margin-top: 8px; font-size: 0.85rem; color: rgba(255,255,255,0.7); font-style: italic;">💡 ${q.explanation}</div>` : ''}
     `;
     container.appendChild(item);
+  });
+
+  // Listener per pulsanti Modifica
+  container.querySelectorAll('.btn-edit-question').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(btn.getAttribute('data-index'), 10);
+      openEditQuestionModal(idx);
+    });
+  });
+}
+
+// Modal Modifica Singola Domanda
+const modalEditQuestion = document.getElementById('modal-edit-question');
+const modalEditQBackdrop = document.getElementById('modal-edit-q-backdrop');
+const btnCloseEditQModal = document.getElementById('btn-close-edit-q-modal');
+const btnCancelEditQ = document.getElementById('btn-cancel-edit-q');
+const formEditQuestion = document.getElementById('form-edit-question');
+
+function openEditQuestionModal(idx) {
+  const q = loadedQuestions[idx];
+  if (!q) return;
+
+  document.getElementById('edit-q-index').value = idx;
+  const titleEl = document.getElementById('modal-q-title');
+  if (titleEl) titleEl.textContent = `Modifica Domanda #${idx + 1}`;
+
+  document.getElementById('edit-q-text').value = q.question || '';
+  document.getElementById('edit-q-macro').value = q.macroArea || '';
+  document.getElementById('edit-q-cat').value = q.category || '';
+
+  for (let i = 0; i < 4; i++) {
+    const inputOpt = document.getElementById(`edit-q-opt-${i}`);
+    if (inputOpt) inputOpt.value = (q.options && q.options[i] !== undefined) ? q.options[i] : '';
+  }
+
+  const correctIdx = (typeof q.correctIndex === 'number' && q.correctIndex >= 0 && q.correctIndex <= 3) ? q.correctIndex : 0;
+  const radio = document.getElementById(`edit-q-radio-${correctIdx}`);
+  if (radio) radio.checked = true;
+
+  document.getElementById('edit-q-explanation').value = q.explanation || '';
+  document.getElementById('edit-q-timer').value = q.timeLimit || 20;
+
+  if (modalEditQuestion) modalEditQuestion.style.display = 'flex';
+}
+
+function closeEditQuestionModal() {
+  if (modalEditQuestion) modalEditQuestion.style.display = 'none';
+}
+
+if (btnCloseEditQModal) btnCloseEditQModal.addEventListener('click', closeEditQuestionModal);
+if (btnCancelEditQ) btnCancelEditQ.addEventListener('click', closeEditQuestionModal);
+if (modalEditQBackdrop) modalEditQBackdrop.addEventListener('click', closeEditQuestionModal);
+
+if (formEditQuestion) {
+  formEditQuestion.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const idx = parseInt(document.getElementById('edit-q-index').value, 10);
+    if (isNaN(idx) || !loadedQuestions[idx]) return;
+
+    const newQuestionText = document.getElementById('edit-q-text').value.trim();
+    const macroArea = document.getElementById('edit-q-macro').value.trim();
+    const category = document.getElementById('edit-q-cat').value.trim();
+    const options = [
+      document.getElementById('edit-q-opt-0').value.trim(),
+      document.getElementById('edit-q-opt-1').value.trim(),
+      document.getElementById('edit-q-opt-2').value.trim(),
+      document.getElementById('edit-q-opt-3').value.trim()
+    ];
+
+    const correctRadio = document.querySelector('input[name="edit-q-correct"]:checked');
+    const correctIndex = correctRadio ? parseInt(correctRadio.value, 10) : 0;
+    const explanation = document.getElementById('edit-q-explanation').value.trim();
+    const timeLimit = parseInt(document.getElementById('edit-q-timer').value, 10) || 20;
+
+    // Aggiorna l'oggetto domanda in memoria
+    loadedQuestions[idx].question = newQuestionText;
+    if (macroArea) loadedQuestions[idx].macroArea = macroArea;
+    if (category) loadedQuestions[idx].category = category;
+    loadedQuestions[idx].options = options;
+    loadedQuestions[idx].correctIndex = correctIndex;
+    loadedQuestions[idx].correctText = options[correctIndex];
+    loadedQuestions[idx].timeLimit = timeLimit;
+    loadedQuestions[idx].explanation = explanation || `Risposta corretta: ${options[correctIndex]}`;
+
+    // Salva immediatamente su questions.json tramite API
+    try {
+      const res = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loadedQuestions)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeEditQuestionModal();
+        renderQuestionsList();
+        alert(`✅ Domanda #${idx + 1} aggiornata e salvata con successo!`);
+      } else {
+        alert('Errore nel salvataggio della domanda.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Errore di connessione durante il salvataggio.');
+    }
   });
 }
 
