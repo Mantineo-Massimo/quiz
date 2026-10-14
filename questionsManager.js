@@ -38,7 +38,7 @@ function loadPool() {
  * Per ciascuna domanda, le 4 opzioni (A, B, C, D) vengono MESCOLATE IN MODO CASUALE,
  * riallineando correctIndex alla nuova posizione della risposta corretta.
  */
-function generateWeightedGameQuestions(targetCount = 20) {
+function generateWeightedGameQuestions(targetCount = 10) {
   const pool = loadPool();
   if (!pool || pool.length === 0) {
     console.warn('Pool di domande vuoto o non trovato.');
@@ -156,7 +156,7 @@ function saveActiveQuestions(questions) {
 /**
  * Carica le domande attive o ne genera 20 nuove ponderate se il file non esiste o è vuoto
  */
-function loadOrGenerateActiveQuestions(count = 20) {
+function loadOrGenerateActiveQuestions(count = 10) {
   try {
     if (fs.existsSync(ACTIVE_PATH)) {
       const data = fs.readFileSync(ACTIVE_PATH, 'utf8');

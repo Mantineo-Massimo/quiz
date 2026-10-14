@@ -1101,26 +1101,26 @@ if (formEditQuestion) {
 const btnGenWeighted = document.getElementById('btn-generate-weighted');
 if (btnGenWeighted) {
   btnGenWeighted.addEventListener('click', async () => {
-    if (confirm('Vuoi estrarre 20 nuove domande ponderate dall\'archivio? Le opzioni di risposta verranno rimescolate in modo casuale.')) {
+    if (confirm('Vuoi estrarre 10 nuove domande ponderate dall\'archivio? Le opzioni di risposta verranno rimescolate in modo casuale.')) {
       btnGenWeighted.disabled = true;
       btnGenWeighted.textContent = '⏳ Estrazione in corso...';
       try {
         const res = await fetch('/api/questions/generate-weighted', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ count: 20 })
+          body: JSON.stringify({ count: 10 })
         });
         const data = await res.json();
         if (data.success) {
           loadedQuestions = data.questions;
           renderQuestionsList();
-          alert('🎉 Estratte con successo 20 domande ponderate bilanciate tra ERSU, Didattica, Servizi e Morgana!');
+          alert('🎉 Estratte con successo 10 domande ponderate bilanciate!');
         }
       } catch (err) {
         alert('Errore durante l\'estrazione delle domande.');
       } finally {
         btnGenWeighted.disabled = false;
-        btnGenWeighted.textContent = '🎲 Estrai Nuove 20 Domande Ponderate';
+        btnGenWeighted.textContent = '🎲 Estrai Nuove 10 Domande Ponderate';
       }
     }
   });

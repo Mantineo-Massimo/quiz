@@ -98,7 +98,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Carica e gestisce le domande da archivio ponderato
 const questionsManager = require('./questionsManager');
 const questionsPath = path.join(__dirname, 'questions.json');
-let questions = questionsManager.loadOrGenerateActiveQuestions(20);
+let questions = questionsManager.loadOrGenerateActiveQuestions(10);
 
 // Funzione per trovare gli indirizzi IP locali
 function getLocalIpAddresses() {
@@ -245,7 +245,7 @@ app.get('/api/questions/pool', (req, res) => {
 });
 
 app.post('/api/questions/generate-weighted', requireAuthApi, (req, res) => {
-  const targetCount = Math.min(Math.max(parseInt(req.body.count || 20, 10), 4), 40);
+  const targetCount = Math.min(Math.max(parseInt(req.body.count || 10, 10), 4), 40);
   questions = questionsManager.generateWeightedGameQuestions(targetCount);
   questionsManager.saveActiveQuestions(questions);
   console.log(`🎲 Generate ${questions.length} nuove domande ponderate con opzioni mescolate`);
