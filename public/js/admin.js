@@ -1,4 +1,11 @@
-const socket = io();
+const savedAdminToken = (function() {
+  try { return sessionStorage.getItem('unime_admin_token') || ''; } catch(e){ return ''; }
+})();
+const socket = io({ auth: { token: savedAdminToken } });
+
+socket.on('auth:unauthorized', () => {
+  window.location.href = '/login?redirect=/admin';
+});
 
 // Tabs
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1006,3 +1013,78 @@ document.getElementById('btn-update-url').addEventListener('click', async () => 
 
 loadQuestions();
 loadNetworkTab();
+
+// Gestione Logout Admin
+const btnAdminLogout = document.getElementById('btn-admin-logout');
+if (btnAdminLogout) {
+  btnAdminLogout.addEventListener('click', async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      sessionStorage.removeItem('unime_admin_token');
+    } catch(e){}
+    window.location.href = '/login?redirect=/admin';
+  });
+}
+
+// Gestione Cambio Password di Amministrazione
+const formChangePwd = document.getElementById('form-change-password');
+const inputNewPwd = document.getElementById('input-new-password');
+const inputConfirmPwd = document.getElementById('input-confirm-password');
+const pwdChangeMsg = document.getElementById('pwd-change-msg');
+const btnSaveNewPwd = document.getElementById('btn-save-new-password');
+
+if (formChangePwd) {
+  formChangePwd.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPwd = (inputNewPwd ? inputNewPwd.value : '').trim();
+    const confirmPwd = (inputConfirmPwd ? inputConfirmPwd.value : '').trim();
+
+    function showPwdMsg(text, type) {
+      if (!pwdChangeMsg) return;
+      pwdChangeMsg.textContent = text;
+      pwdChangeMsg.style.display = 'block';
+      if (type === 'success') {
+        pwdChangeMsg.style.background = 'rgba(16, 185, 129, 0.15)';
+        pwdChangeMsg.style.color = '#34d399';
+        pwdChangeMsg.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+      } else {
+        pwdChangeMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+        pwdChangeMsg.style.color = '#fca5a5';
+        pwdChangeMsg.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+      }
+    }
+
+    if (!newPwd || newPwd.length < 4) {
+      showPwdMsg('La password deve contenere almeno 4 caratteri.', 'error');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      showPwdMsg('Le due password non coincidono. Riprova.', 'error');
+      return;
+    }
+
+    btnSaveNewPwd.disabled = true;
+    btnSaveNewPwd.textContent = '⏳ Salvataggio...';
+
+    try {
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: newPwd })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showPwdMsg('✅ Password aggiornata con successo! Sarà valida per i prossimi accessi.', 'success');
+        if (inputNewPwd) inputNewPwd.value = '';
+        if (inputConfirmPwd) inputConfirmPwd.value = '';
+      } else {
+        showPwdMsg('❌ ' + (data.error || 'Errore durante l\'aggiornamento'), 'error');
+      }
+    } catch (err) {
+      showPwdMsg('❌ Errore di connessione al server.', 'error');
+    } finally {
+      btnSaveNewPwd.disabled = false;
+      btnSaveNewPwd.textContent = '💾 Aggiorna Password';
+    }
+  });
+}

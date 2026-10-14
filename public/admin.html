@@ -21,10 +21,13 @@
           <span class="brand-sub-main" style="font-size: 0.68rem;">UNIME LEVEL UP • REGIA SHOW MATRICOLE</span>
         </div>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 10px; align-items: center;">
         <a href="/host" target="_blank" class="btn btn-primary" style="padding: 10px 18px; font-size: 0.9rem;">
           🖥️ Maxischermo Host
         </a>
+        <button id="btn-admin-logout" class="btn btn-glass" style="padding: 10px 16px; font-size: 0.85rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" title="Disconnetti sessione">
+          🚪 Esci
+        </button>
       </div>
     </header>
 
@@ -34,6 +37,7 @@
       <button class="tab-btn" data-tab="tab-accounts">🗂️ Archivio Account (<span id="admin-account-count">0</span>)</button>
       <button class="tab-btn" data-tab="tab-questions">📝 Modifica Domande (<span id="admin-q-count">0</span>)</button>
       <button class="tab-btn" data-tab="tab-network">🌐 Rete &amp; QR Code</button>
+      <button class="tab-btn" data-tab="tab-security">🔒 Sicurezza</button>
     </div>
 
     <!-- BARRA STATO IN TEMPO REALE -->
@@ -282,6 +286,64 @@
             <li>Entrano all'istante senza installare nessuna app!</li>
           </ol>
         </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: SICUREZZA & PASSWORD -->
+    <div id="tab-security" class="admin-panel">
+      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Protezione Accesso &amp; Sicurezza Regia</h2>
+      
+      <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 18px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+        <span style="font-size: 2rem;">🛡️</span>
+        <div>
+          <div style="font-weight: 800; color: #10b981; font-size: 1.05rem;">Protezione Attiva su /host e /admin</div>
+          <div style="font-size: 0.88rem; color: #cbd5e1; margin-top: 4px; line-height: 1.4;">
+            Le pagine <strong>/admin</strong> e <strong>/host</strong> e tutti i comandi di controllo del gioco sono protetti da autenticazione con password. Gli utenti connessi con lo smartphone non possono visualizzare né manomettere la regia.
+          </div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); padding: 24px; border-radius: 14px; border: 1px solid var(--border-glass); max-width: 550px;">
+        <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 1.15rem; color: var(--accent-gold);">
+          🔑 Cambia Password di Amministrazione
+        </h3>
+        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 16px;">
+          Puoi aggiornare la password in qualsiasi momento. La modifica viene salvata in modo permanente e sarà valida per i successivi accessi.
+        </p>
+
+        <div id="pwd-change-msg" style="display: none; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-size: 0.88rem;"></div>
+
+        <form id="form-change-password" onsubmit="return false;">
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; color: #cbd5e1;">
+              Nuova Password
+            </label>
+            <input 
+              type="password" 
+              id="input-new-password" 
+              class="input-nick" 
+              placeholder="Minimo 4 caratteri..." 
+              style="width: 100%; box-sizing: border-box; font-size: 1rem; padding: 12px 14px;"
+              required
+            >
+          </div>
+          <div style="margin-bottom: 18px;">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; color: #cbd5e1;">
+              Conferma Nuova Password
+            </label>
+            <input 
+              type="password" 
+              id="input-confirm-password" 
+              class="input-nick" 
+              placeholder="Digita di nuovo la nuova password..." 
+              style="width: 100%; box-sizing: border-box; font-size: 1rem; padding: 12px 14px;"
+              required
+            >
+          </div>
+          <button type="submit" id="btn-save-new-password" class="btn btn-primary" style="padding: 12px 24px; font-weight: 700;">
+            💾 Aggiorna Password
+          </button>
+        </form>
       </div>
     </div>
 

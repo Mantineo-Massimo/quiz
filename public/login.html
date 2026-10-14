@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accesso Riservato | UniMe Level Up</title>
+  <link rel="icon" type="image/png" href="/assets/Morgana.png">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 20%, #1a2238 0%, #090e1a 100%);
+      color: #fff;
+      font-family: var(--font-main, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(13, 20, 36, 0.85);
+      border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.12));
+      border-radius: 24px;
+      padding: 36px 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(193, 41, 47, 0.15);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-wrapper::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #c1292f, #f59e0b, #c1292f);
+    }
+
+    .login-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .login-logos img {
+      height: 38px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+    }
+
+    .login-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #f59e0b;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+
+    .login-title {
+      font-family: var(--font-display, inherit);
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .login-subtitle {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin: 0 0 26px 0;
+      line-height: 1.4;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+
+    .password-field-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .login-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 14px 44px 14px 16px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .login-input:focus {
+      border-color: #f59e0b;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+
+    .btn-toggle-pwd {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .btn-toggle-pwd:hover {
+      color: #fff;
+    }
+
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, #c1292f 0%, #991b1b 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 20px rgba(193, 41, 47, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-login:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(193, 41, 47, 0.5);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      display: none;
+      text-align: left;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .login-footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+    }
+
+    .login-footer a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .login-footer a:hover {
+      color: #f59e0b;
+    }
+
+    .dest-indicator {
+      font-size: 0.78rem;
+      color: #f59e0b;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-logos">
+      <img src="/assets/Morgana.svg" alt="Morgana" onerror="this.src='/assets/Morgana.png'">
+      <img src="/assets/ORUM.svg" alt="O.R.U.M." onerror="this.src='/assets/ORUM.png'">
+      <img src="/assets/unime.svg" alt="UniMe" style="height: 24px; opacity: 0.85;">
+    </div>
+
+    <div class="login-badge">🔒 Area Riservata Staff</div>
+    <h1 class="login-title">Autenticazione</h1>
+    <p class="login-subtitle">Inserisci la password di sicurezza per accedere alla Regia o al Maxischermo Host.</p>
+
+    <div id="target-dest" class="dest-indicator"></div>
+
+    <div id="login-error-box" class="login-error"></div>
+
+    <form id="form-login">
+      <div class="input-group">
+        <label class="input-label" for="admin-password">Password di Amministrazione</label>
+        <div class="password-field-container">
+          <input 
+            type="password" 
+            id="admin-password" 
+            class="login-input" 
+            placeholder="Inserisci la password..." 
+            autocomplete="current-password" 
+            required 
+            autofocus
+          >
+          <button type="button" id="btn-toggle-pwd" class="btn-toggle-pwd" title="Mostra / Nascondi password">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" id="btn-submit" class="btn-login">
+        <span>🔐 Sblocca e Accedi</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <a href="/">← Torna alla Home</a>
+      <span style="color: #64748b;">UniMe Level Up</span>
+    </div>
+  </div>
+
+  <script>
+    // Recupera la destinazione originale dai parametri di query (?redirect=...)
+    const params = new URLSearchParams(window.location.search);
+    const redirectTarget = params.get('redirect') || '/admin';
+    
+    const targetDestEl = document.getElementById('target-dest');
+    if (redirectTarget.includes('host')) {
+      targetDestEl.textContent = 'Destinazione richiesta: 🖥️ Maxischermo Host';
+    } else {
+      targetDestEl.textContent = 'Destinazione richiesta: ⚙️ Pannello Regia & Controllo';
+    }
+
+    const form = document.getElementById('form-login');
+    const pwdInput = document.getElementById('admin-password');
+    const toggleBtn = document.getElementById('btn-toggle-pwd');
+    const errorBox = document.getElementById('login-error-box');
+    const submitBtn = document.getElementById('btn-submit');
+
+    // Toggle mostra/nascondi password
+    toggleBtn.addEventListener('click', () => {
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        pwdInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = pwdInput.value.trim();
+      if (!password) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>⏳ Verifica in corso...</span>';
+      errorBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          // Salva anche nel sessionStorage per client socket / backup
+          if (data.token) {
+            try { sessionStorage.setItem('unime_admin_token', data.token); } catch(e){}
+          }
+          submitBtn.innerHTML = '<span>✅ Accesso autorizzato!</span>';
+          submitBtn.style.background = '#10b981';
+          
+          setTimeout(() => {
+            window.location.href = redirectTarget;
+          }, 350);
+        } else {
+          errorBox.textContent = '❌ ' + (data.error || 'Password non valida. Riprova.');
+          errorBox.style.display = 'block';
+          pwdInput.value = '';
+          pwdInput.focus();
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>🔐 Sblocca e Accedi</span>';
+        }
+      } catch (err) {
+        errorBox.textContent = '❌ Errore di connessione al server.';
+        errorBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🔐 Sblocca e Accedi</span>';
+      }
+    });
+  </script>
+</body>
+</html>

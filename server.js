@@ -14,10 +14,85 @@ const io = new Server(server, {
   pingTimeout: 4000
 });
 
+const crypto = require('crypto');
+
 const PORT = process.env.PORT || 3000;
 let customPublicUrl = process.env.PUBLIC_URL || '';
 
+// Database Persistente su Disco (sopravvive a riavvii, crash e ricaricamenti)
+const db = require('./database');
+const gameState = db.state;
+
+// Sessioni autenticate attive in memoria (Admin / Host)
+const validSessions = new Set();
+
+// Parser leggero dei cookie HTTP
+function parseCookies(req) {
+  const list = {};
+  const cookieHeader = req && req.headers && req.headers.cookie;
+  if (!cookieHeader) return list;
+  cookieHeader.split(';').forEach(cookie => {
+    const [name, ...rest] = cookie.split('=');
+    if (!name) return;
+    const key = name.trim();
+    list[key] = decodeURIComponent(rest.join('=').trim());
+  });
+  return list;
+}
+
+// Recupera la password amministratore configurata (.env o salvata in db.json)
+function getAdminPassword() {
+  return process.env.ADMIN_PASSWORD || db.state.adminPassword || 'unime2026';
+}
+
+function isValidSessionToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  return validSessions.has(token);
+}
+
+function isAuthenticated(req) {
+  const cookies = parseCookies(req);
+  if (isValidSessionToken(cookies.auth_token)) return true;
+
+  const authHeader = req.headers && req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const bearer = authHeader.slice(7).trim();
+    if (isValidSessionToken(bearer)) return true;
+  }
+  return false;
+}
+
+// Middleware per pagine HTML riservate (/admin, /host)
+function requireAuthPage(req, res, next) {
+  if (isAuthenticated(req)) {
+    return next();
+  }
+  const redirectTarget = encodeURIComponent(req.originalUrl || '/admin');
+  return res.redirect(`/login?redirect=${redirectTarget}`);
+}
+
+// Middleware per API REST riservate (/api/accounts, /api/players, ecc.)
+function requireAuthApi(req, res, next) {
+  if (isAuthenticated(req)) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Accesso non autorizzato. Autenticazione richiesta.' });
+}
+
 app.use(express.json());
+
+// Intercetta accessi diretti a file statici sensibili prima che vengano serviti liberamente
+app.use((req, res, next) => {
+  const normalizedPath = (req.path || '').toLowerCase();
+  if (normalizedPath === '/admin.html' || normalizedPath === '/host.html') {
+    if (!isAuthenticated(req)) {
+      const target = normalizedPath === '/host.html' ? '/host' : '/admin';
+      return res.redirect(`/login?redirect=${encodeURIComponent(target)}`);
+    }
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Carica e gestisce le domande da archivio ponderato
@@ -38,10 +113,6 @@ function getLocalIpAddresses() {
   }
   return addresses;
 }
-
-// Database Persistente su Disco (sopravvive a riavvii, crash e ricaricamenti)
-const db = require('./database');
-const gameState = db.state;
 
 // Calcolo Punti basato su correttezza, velocità e serie (streak)
 function calculateScore(timeRemaining, timeLimit, isCorrect, streak) {
@@ -103,7 +174,55 @@ app.get('/api/network', async (req, res) => {
   }
 });
 
-app.post('/api/set-url', (req, res) => {
+// Endpoints di Autenticazione & Sicurezza
+app.get('/login', (req, res) => {
+  if (isAuthenticated(req)) {
+    const redirectTarget = req.query.redirect || '/admin';
+    return res.redirect(redirectTarget);
+  }
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.post('/api/login', (req, res) => {
+  const { password } = req.body || {};
+  const currentPassword = getAdminPassword();
+
+  if (password && password.trim() === currentPassword.trim()) {
+    const token = crypto.randomBytes(32).toString('hex');
+    validSessions.add(token);
+
+    // Imposta cookie di sessione (validità 30 giorni, HttpOnly, SameSite Lax)
+    res.setHeader('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+    console.log('🔓 [Sicurezza] Accesso autenticato con successo (token generato).');
+    return res.json({ success: true, token });
+  }
+
+  console.warn('⛔ [Sicurezza] Tentativo di accesso fallito: password errata.');
+  return res.status(401).json({ error: 'Password non valida. Riprova.' });
+});
+
+app.post('/api/logout', (req, res) => {
+  const cookies = parseCookies(req);
+  if (cookies.auth_token) {
+    validSessions.delete(cookies.auth_token);
+  }
+  res.setHeader('Set-Cookie', 'auth_token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+  console.log('🚪 [Sicurezza] Sessione disconnessa.');
+  return res.json({ success: true });
+});
+
+app.post('/api/change-password', requireAuthApi, (req, res) => {
+  const { newPassword } = req.body || {};
+  if (!newPassword || newPassword.trim().length < 4) {
+    return res.status(400).json({ error: 'La nuova password deve contenere almeno 4 caratteri.' });
+  }
+  db.state.adminPassword = newPassword.trim();
+  db.save();
+  console.log('🔑 [Sicurezza] Nuova password di amministrazione impostata e salvata.');
+  return res.json({ success: true, message: 'Password aggiornata con successo!' });
+});
+
+app.post('/api/set-url', requireAuthApi, (req, res) => {
   const { url } = req.body;
   customPublicUrl = url || '';
   const effectiveBase = customPublicUrl || `http://${getLocalIpAddresses()[0] || 'localhost'}:${PORT}`;
@@ -120,7 +239,7 @@ app.get('/api/questions/pool', (req, res) => {
   res.json(questionsManager.getPoolStats());
 });
 
-app.post('/api/questions/generate-weighted', (req, res) => {
+app.post('/api/questions/generate-weighted', requireAuthApi, (req, res) => {
   const targetCount = Math.min(Math.max(parseInt(req.body.count || 20, 10), 4), 40);
   questions = questionsManager.generateWeightedGameQuestions(targetCount);
   questionsManager.saveActiveQuestions(questions);
@@ -130,7 +249,7 @@ app.post('/api/questions/generate-weighted', (req, res) => {
   res.json({ success: true, count: questions.length, questions });
 });
 
-app.post('/api/questions', (req, res) => {
+app.post('/api/questions', requireAuthApi, (req, res) => {
   if (Array.isArray(req.body)) {
     questions = req.body;
     try {
@@ -155,20 +274,22 @@ app.get('/play', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'play.html'));
 });
 
-app.get('/host', (req, res) => {
+// Maxischermo Host protetto: solo chi ha la password può visualizzarlo
+app.get('/host', requireAuthPage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
-app.get('/admin', (req, res) => {
+// Pannello Regia protetto: solo chi ha la password può accedere
+app.get('/admin', requireAuthPage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// API Archivio Storico Account (Permanenti)
-app.get('/api/accounts', (req, res) => {
+// API Archivio Storico Account (Permanenti) - Protette
+app.get('/api/accounts', requireAuthApi, (req, res) => {
   res.json(Object.values(gameState.accounts || {}));
 });
 
-app.post('/api/accounts/:id', (req, res) => {
+app.post('/api/accounts/:id', requireAuthApi, (req, res) => {
   const { id } = req.params;
   const updated = db.upsertAccount({ ...req.body, id });
   if (updated) {
@@ -180,7 +301,7 @@ app.post('/api/accounts/:id', (req, res) => {
   }
 });
 
-app.delete('/api/accounts/:id', (req, res) => {
+app.delete('/api/accounts/:id', requireAuthApi, (req, res) => {
   const { id } = req.params;
   const deleted = db.deleteAccount(id);
   if (deleted) {
@@ -193,8 +314,8 @@ app.delete('/api/accounts/:id', (req, res) => {
   }
 });
 
-// Export CSV Archivio Completo Account o Partita Corrente
-app.get('/api/accounts/export-csv', (req, res) => {
+// Export CSV Archivio Completo Account o Partita Corrente (Riservato Admin)
+app.get('/api/accounts/export-csv', requireAuthApi, (req, res) => {
   const accounts = Object.values(gameState.accounts || {});
   
   const headers = [
@@ -239,12 +360,12 @@ app.get('/api/accounts/export-csv', (req, res) => {
   res.send(csvContent);
 });
 
-// API Partecipanti Attivi nella Sessione
-app.get('/api/players', (req, res) => {
+// API Partecipanti Attivi nella Sessione (Riservato Admin)
+app.get('/api/players', requireAuthApi, (req, res) => {
   res.json(Object.values(gameState.players));
 });
 
-app.get('/api/players/export-csv', (req, res) => {
+app.get('/api/players/export-csv', requireAuthApi, (req, res) => {
   const players = Object.values(gameState.players);
   
   const headers = [
@@ -539,6 +660,29 @@ function startFinale() {
 // Mappa socket.id -> playerId
 const socketToPlayerId = {};
 
+// Middleware Socket.IO per autenticare connessioni di amministrazione e host
+io.use((socket, next) => {
+  const cookies = parseCookies(socket.request);
+  const token = socket.handshake.auth?.token || cookies.auth_token;
+  socket.data.isAdmin = isValidSessionToken(token);
+  next();
+});
+
+// Helper per verificare autorizzazione admin sui comandi Socket.IO
+function isAuthorizedAdminSocket(socket, actionName = 'comando admin') {
+  if (socket.data && socket.data.isAdmin) return true;
+  // Controllo secondario per token inviato nell'auth payload o cookie aggiornato
+  const cookies = parseCookies(socket.request);
+  const token = socket.handshake.auth?.token || cookies.auth_token;
+  if (isValidSessionToken(token)) {
+    socket.data.isAdmin = true;
+    return true;
+  }
+  console.warn(`🔒 [Sicurezza Socket] Rifiutato ${actionName} da client non autorizzato (${socket.id}).`);
+  socket.emit('auth:unauthorized', { error: 'Azione non consentita: autenticazione riservata.' });
+  return false;
+}
+
 // Socket.io Handlers
 io.on('connection', (socket) => {
   // Sync completo immediato a chiunque si colleghi (Host, Admin, Player ricaricati)
@@ -776,8 +920,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Comandi Host / Admin
+  // Comandi Host / Admin (Riservati agli operatori autenticati)
   socket.on('admin:startGame', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:startGame')) return;
     db.reset();
     for (const pid of Object.keys(gameState.players)) {
       gameState.players[pid].waitingRoom = false;
@@ -797,14 +942,17 @@ io.on('connection', (socket) => {
   }
 
   socket.on('admin:nextQuestion', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:nextQuestion')) return;
     advanceToNextQuestion();
   });
 
   socket.on('admin:showLeaderboard', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:showLeaderboard')) return;
     showLeaderboard();
   });
 
   socket.on('admin:next', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:next')) return;
     if (gameState.status === 'SHOW_ANSWER') {
       advanceToNextQuestion();
     } else if (gameState.status === 'LEADERBOARD') {
@@ -815,6 +963,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:revealNow', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:revealNow')) return;
     if (gameState.status === 'QUESTION') {
       revealAnswer();
     }
@@ -858,10 +1007,12 @@ io.on('connection', (socket) => {
   }
 
   socket.on('admin:advanceFinale', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:advanceFinale')) return;
     advanceFinale();
   });
 
   socket.on('admin:skipToPodium', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:skipToPodium')) return;
     const leaderboard = getLeaderboard();
     gameState.status = 'PODIUM';
     gameState.podiumStep = 0;
@@ -874,6 +1025,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:revealAllPodium', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:revealAllPodium')) return;
     const leaderboard = getLeaderboard();
     gameState.status = 'PODIUM';
     gameState.podiumStep = 3;
@@ -886,10 +1038,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:showPodium', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:showPodium')) return;
     startFinale();
   });
 
   socket.on('admin:resetLobby', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:resetLobby')) return;
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
     db.reset();
     for (const p of Object.values(gameState.players)) {
@@ -901,6 +1055,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:generateWeightedQuestions', ({ count } = {}) => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:generateWeightedQuestions')) return;
     const targetCount = Math.min(Math.max(parseInt(count || 20, 10), 4), 40);
     questions = questionsManager.generateWeightedGameQuestions(targetCount);
     questionsManager.saveActiveQuestions(questions);
@@ -910,6 +1065,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:clearAllPlayers', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:clearAllPlayers')) return;
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
     db.clearPlayers();
     io.emit('game:resetToLobby');
@@ -918,6 +1074,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:kickPlayer', ({ playerId }) => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:kickPlayer')) return;
     if (gameState.players[playerId]) {
       delete gameState.players[playerId];
       if (gameState.answersCurrentQuestion) delete gameState.answersCurrentQuestion[playerId];
@@ -928,8 +1085,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Gestione Account permanente (Modifica & Cancellazione)
+  // Gestione Account permanente (Modifica & Cancellazione - Solo Admin)
   socket.on('admin:updateAccount', (accountData) => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:updateAccount')) return;
     if (!accountData || !accountData.id) return;
     const updated = db.upsertAccount(accountData);
     if (updated) {
@@ -941,22 +1099,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:deleteAccount', ({ accountId }) => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:deleteAccount')) return;
     if (!accountId) return;
     console.log(`🗑️ [Admin Socket] Eliminazione account definitivo: ${accountId}`);
     const deleted = db.deleteAccount(accountId);
     if (deleted) {
       io.to(accountId).emit('player:accountDeleted');
-      emitPlayersUpdated();
-      sendSyncState();
-    }
-  });
-
-  socket.on('player:deleteMyAccount', ({ playerId } = {}) => {
-    const pid = playerId || socketToPlayerId[socket.id];
-    if (pid) {
-      console.log(`🗑️ [Player Socket] Giocatore ${pid} ha cancellato il proprio profilo.`);
-      db.deleteAccount(pid);
-      socket.emit('player:accountDeleted');
       emitPlayersUpdated();
       sendSyncState();
     }

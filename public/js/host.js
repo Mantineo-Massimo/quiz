@@ -1,4 +1,11 @@
-const socket = io();
+const savedAdminToken = (function() {
+  try { return sessionStorage.getItem('unime_admin_token') || ''; } catch(e){ return ''; }
+})();
+const socket = io({ auth: { token: savedAdminToken } });
+
+socket.on('auth:unauthorized', () => {
+  window.location.href = '/login?redirect=/host';
+});
 
 // UI Elements
 const screens = {
@@ -577,3 +584,15 @@ window.addEventListener('keyup', (e) => {
     e.stopPropagation();
   }
 });
+
+// Gestione Logout Host
+const btnHostLogout = document.getElementById('btn-host-logout');
+if (btnHostLogout) {
+  btnHostLogout.addEventListener('click', async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      sessionStorage.removeItem('unime_admin_token');
+    } catch(e){}
+    window.location.href = '/login?redirect=/host';
+  });
+}

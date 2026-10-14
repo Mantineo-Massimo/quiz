@@ -9,6 +9,7 @@ const defaultState = {
   timeRemaining: 20,
   finalRevealStep: 0,
   podiumStep: 0,
+  adminPassword: process.env.ADMIN_PASSWORD || 'unime2026',
   players: {}, // playerId -> giocatori nella partita/sessione attiva
   accounts: {}, // playerId -> archivio storico permanente di tutti i giocatori registrati in passato
   answersCurrentQuestion: {}, // playerId -> optionIndex
@@ -49,6 +50,7 @@ class Database {
         return {
           ...defaultState,
           ...parsed,
+          adminPassword: parsed.adminPassword || process.env.ADMIN_PASSWORD || 'unime2026',
           finalRevealStep: parsed.finalRevealStep || 0,
           podiumStep: parsed.podiumStep || 0,
           players: loadedPlayers,
@@ -71,6 +73,7 @@ class Database {
         timeRemaining: this.state.timeRemaining,
         finalRevealStep: this.state.finalRevealStep || 0,
         podiumStep: this.state.podiumStep || 0,
+        adminPassword: this.state.adminPassword || process.env.ADMIN_PASSWORD || 'unime2026',
         players: this.state.players,
         accounts: this.state.accounts,
         answersCurrentQuestion: this.state.answersCurrentQuestion,

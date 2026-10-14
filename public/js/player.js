@@ -592,32 +592,6 @@ if (btnEditTeam) {
   });
 }
 
-// Eliminazione del proprio account da parte del giocatore
-const btnDeleteAccount = document.getElementById('btn-delete-account');
-if (btnDeleteAccount) {
-  btnDeleteAccount.addEventListener('click', () => {
-    if (confirm('Sei sicuro di voler eliminare definitivamente il tuo profilo e account registrato?')) {
-      socket.emit('player:deleteMyAccount', { playerId: myPlayerId });
-    }
-  });
-}
-
-socket.on('player:accountDeleted', () => {
-  try {
-    localStorage.removeItem('unime_quiz_registration');
-    localStorage.removeItem('unime_quiz_nick');
-    localStorage.removeItem('unime_quiz_avatar');
-  } catch (e) {}
-  alert('Il tuo account è stato eliminato con successo.');
-  isJoined = false;
-  showView('join');
-  const regForm = document.getElementById('form-registration');
-  if (regForm) regForm.reset();
-  if (unimeConditionalFields) unimeConditionalFields.style.display = 'flex';
-  if (btnUnimeYes) btnUnimeYes.classList.add('active');
-  if (btnUnimeNo) btnUnimeNo.classList.remove('active');
-  isUnime = true;
-});
 
 socket.on('player:accountUpdated', (updated) => {
   if (updated) {
