@@ -84,14 +84,77 @@ socket.on('game:syncState', (state) => {
 });
 
 // Fullscreen & Audio controls
-const btnFullscreen = document.getElementById('btn-fullscreen');
-btnFullscreen.addEventListener('click', () => {
-  btnFullscreen.blur();
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(() => {});
-  } else {
-    document.exitFullscreen().catch(() => {});
+function isFullscreenActive() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+
+function requestFullscreenMode() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) {
+    return el.requestFullscreen().catch(() => {});
+  } else if (el.webkitRequestFullscreen) {
+    return el.webkitRequestFullscreen();
+  } else if (el.mozRequestFullScreen) {
+    return el.mozRequestFullScreen();
+  } else if (el.msRequestFullscreen) {
+    return el.msRequestFullscreen();
   }
+}
+
+function exitFullscreenMode() {
+  if (document.exitFullscreen) {
+    return document.exitFullscreen().catch(() => {});
+  } else if (document.webkitExitFullscreen) {
+    return document.webkitExitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    return document.mozCancelFullScreen();
+  } else if (document.msExitFullscreen) {
+    return document.msExitFullscreen();
+  }
+}
+
+function toggleFullscreenMode() {
+  if (!isFullscreenActive()) {
+    requestFullscreenMode();
+  } else {
+    exitFullscreenMode();
+  }
+}
+
+const btnFullscreen = document.getElementById('btn-fullscreen');
+if (btnFullscreen) {
+  btnFullscreen.addEventListener('click', (e) => {
+    e.stopPropagation();
+    btnFullscreen.blur();
+    toggleFullscreenMode();
+  });
+}
+
+function updateFullscreenUI() {
+  const isFs = isFullscreenActive();
+  if (btnFullscreen) {
+    btnFullscreen.innerHTML = isFs ? '✕' : '⛶';
+    btnFullscreen.title = isFs ? 'Esci da Schermo Intero (F o Esc)' : 'Schermo Intero (F)';
+    if (isFs) {
+      btnFullscreen.style.borderColor = 'var(--accent-gold)';
+      btnFullscreen.style.color = 'var(--accent-gold)';
+    } else {
+      btnFullscreen.style.borderColor = '';
+      btnFullscreen.style.color = '';
+    }
+  }
+}
+document.addEventListener('fullscreenchange', updateFullscreenUI);
+document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+document.addEventListener('mozfullscreenchange', updateFullscreenUI);
+document.addEventListener('MSFullscreenChange', updateFullscreenUI);
+
+// Doppio clic sullo sfondo dell'arena o dell'header per attivare lo schermo intero
+document.addEventListener('dblclick', (e) => {
+  if (e.target && (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('.option-card'))) {
+    return;
+  }
+  toggleFullscreenMode();
 });
 
 const btnSound = document.getElementById('btn-sound');
@@ -137,6 +200,9 @@ socket.on('host:playersUpdated', (players) => {
 const btnStartQuiz = document.getElementById('btn-start-quiz');
 btnStartQuiz.addEventListener('click', () => {
   window.sounds.init();
+  if (!isFullscreenActive()) {
+    requestFullscreenMode();
+  }
   socket.emit('admin:startGame');
 });
 
@@ -183,6 +249,9 @@ socket.on('game:questionStarted', (data) => {
 const audioUnlockPill = document.getElementById('host-audio-unlock-pill');
 function unlockAudioShow() {
   window.sounds.unlockAudio();
+  if (!isFullscreenActive()) {
+    requestFullscreenMode();
+  }
   if (audioUnlockPill) {
     audioUnlockPill.style.display = 'none';
   }
@@ -607,6 +676,11 @@ window.addEventListener('keydown', (e) => {
         fireConfetti();
       }
     }
+  } else if (e.code === 'KeyF') {
+    // Tasto rapido F per Schermo Intero
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    e.preventDefault();
+    toggleFullscreenMode();
   } else if (e.code === 'KeyC' || e.code === 'KeyL') {
     // Tasto rapido C (Classifica) o L (Leaderboard) durante lo show
     if (screens.question.classList.contains('active')) {
