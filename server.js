@@ -114,13 +114,14 @@ function getLocalIpAddresses() {
   return addresses;
 }
 
-// Calcolo Punti basato su correttezza, velocità e serie (streak)
-function calculateScore(timeRemaining, timeLimit, isCorrect, streak) {
+// Calcolo Punti ad altissima precisione basato su correttezza, tempo di risposta al millisecondo e streak
+function calculateScore(timeSpentMs, timeLimitMs, isCorrect, streak) {
   if (!isCorrect) return 0;
-  const ratio = Math.max(0, Math.min(1, timeRemaining / timeLimit));
+  // Tempo rimanente continuo: più veloce rispondi (timeSpentMs basso), più punti ottieni
+  const ratio = Math.max(0, Math.min(1, 1 - (timeSpentMs / timeLimitMs)));
   const basePoints = 500;
-  const speedBonus = Math.round(500 * ratio);
-  const streakBonus = Math.min(streak * 50, 250);
+  const speedBonus = Math.round(500 * ratio); // 0 .. 500 continui (senza pari merito banali)
+  const streakBonus = Math.min((streak || 0) * 50, 250);
   return basePoints + speedBonus + streakBonus;
 }
 
@@ -451,6 +452,8 @@ function sendSyncState(target) {
     finalRevealStep: gameState.finalRevealStep || 0,
     podiumStep: gameState.podiumStep || 0,
     totalNonPodium: Math.max(0, leaderboard.length - 3),
+    isPaused: !!gameState.isPaused,
+    expectedVotersCount: gameState.expectedVotersCount || 0,
     leaderboard
   };
 
@@ -461,7 +464,77 @@ function sendSyncState(target) {
   }
 }
 
-// Timer Gestione Domande
+// Gestione Bot di Prova e Simulazione
+let botTimeouts = [];
+function clearBotTimeouts() {
+  botTimeouts.forEach(t => clearTimeout(t));
+  botTimeouts = [];
+}
+
+const BOT_PRESETS = [
+  { name: 'MatricolaBot 🎓', avatar: '🤖', dept: 'Dipartimento di Ingegneria', course: 'Ingegneria Informatica' },
+  { name: 'Esse3Bot 💻', avatar: '🦁', dept: 'Dipartimento di Economia', course: 'Economia Aziendale' },
+  { name: 'MensaErsuBot 🍝', avatar: '🍕', dept: 'Dipartimento di Giurisprudenza', course: 'Giurisprudenza' },
+  { name: 'MorganaBot 🏛️', avatar: '⚡', dept: 'Dipartimento di Scienze Politiche e Giuridiche', course: 'Scienze Politiche' },
+  { name: 'OrumBot 📚', avatar: '🦉', dept: 'Dipartimento di Civiltà Antiche e Moderne', course: 'Lettere' },
+  { name: 'CusSportBot ⚽', avatar: '🏆', dept: 'Dipartimento di Scienze Biomediche, Odontoiatriche', course: 'Scienze Motorie' }
+];
+
+function spawnBots(count = 6) {
+  const chosen = BOT_PRESETS.slice(0, count);
+  chosen.forEach((b, idx) => {
+    const botId = `bot_${idx + 1}`;
+    const botData = {
+      id: botId,
+      nickname: b.name,
+      avatar: b.avatar,
+      firstName: b.name.split(' ')[0],
+      lastName: 'Bot',
+      phone: '333000000' + idx,
+      email: `bot${idx + 1}@studenti.unime.it`,
+      isUnime: true,
+      matricola: `50000${idx + 1}`,
+      department: b.dept,
+      course: b.course,
+      academicYear: '1° Anno',
+      score: 0,
+      streak: 0,
+      connected: true,
+      waitingRoom: false,
+      isBot: true,
+      registeredAt: new Date().toISOString()
+    };
+    gameState.players[botId] = botData;
+    db.upsertAccount(botData);
+  });
+  db.save();
+  emitPlayersUpdated();
+  sendSyncState();
+  console.log(`🤖 [Bot Simulator] Generati ${chosen.length} Bot di Prova nella sessione.`);
+}
+
+function removeBots() {
+  clearBotTimeouts();
+  let count = 0;
+  for (const pid of Object.keys(gameState.players)) {
+    if (gameState.players[pid].isBot) {
+      delete gameState.players[pid];
+      if (gameState.answersCurrentQuestion) delete gameState.answersCurrentQuestion[pid];
+      count++;
+    }
+  }
+  for (const pid of Object.keys(gameState.accounts || {})) {
+    if (gameState.accounts[pid].isBot) {
+      delete gameState.accounts[pid];
+    }
+  }
+  db.save();
+  emitPlayersUpdated();
+  sendSyncState();
+  console.log(`🤖 [Bot Simulator] Rimossi ${count} Bot di Prova.`);
+}
+
+// Timer Gestione Domande con supporto Pausa
 function startQuestionTimer() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
 
@@ -473,8 +546,17 @@ function startQuestionTimer() {
   }
 
   gameState.timerInterval = setInterval(() => {
+    if (gameState.isPaused) {
+      // Se il timer è in pausa per spiegazioni del presentatore, non decrementare
+      return;
+    }
+
     gameState.timeRemaining -= 1;
-    io.emit('game:timerTick', { timeRemaining: gameState.timeRemaining, timeLimit });
+    io.emit('game:timerTick', { 
+      timeRemaining: gameState.timeRemaining, 
+      timeLimit, 
+      isPaused: !!gameState.isPaused 
+    });
 
     if (gameState.timeRemaining <= 0) {
       clearInterval(gameState.timerInterval);
@@ -489,16 +571,23 @@ function revealAnswer() {
     clearInterval(gameState.timerInterval);
     gameState.timerInterval = null;
   }
+  clearBotTimeouts();
+
   gameState.status = 'SHOW_ANSWER';
   gameState.timeRemaining = 0;
+  gameState.isPaused = false;
 
   const currentQ = questions[gameState.currentQuestionIndex];
   if (!currentQ) return;
 
-  // Notifica subito a tutti che il tempo è a 0
-  io.emit('game:timerTick', { timeRemaining: 0, timeLimit: currentQ.timeLimit || 20 });
+  const timeLimitMs = (currentQ.timeLimit || 20) * 1000;
 
-  // Calcolo punti e serie per ogni giocatore
+  // Notifica subito a tutti che il tempo è terminato
+  io.emit('game:timerTick', { timeRemaining: 0, timeLimit: currentQ.timeLimit || 20, isPaused: false });
+
+  // Calcolo punti ad alta precisione con millisecondi, serie e penalità malus per chi sbaglia
+  const PENALTY_WRONG_ANSWER = 200; // Punti persi per risposta errata
+
   for (const pid of Object.keys(gameState.players)) {
     const player = gameState.players[pid];
     const playerAnswer = gameState.answersCurrentQuestion[pid];
@@ -506,12 +595,22 @@ function revealAnswer() {
 
     if (isCorrect) {
       player.streak = (player.streak || 0) + 1;
-      const pts = calculateScore(player.lastAnswerTime || 0, currentQ.timeLimit || 20, true, player.streak);
+      const responseMs = player.lastAnswerTimeMs !== undefined ? player.lastAnswerTimeMs : timeLimitMs;
+      const pts = calculateScore(responseMs, timeLimitMs, true, player.streak);
       player.score = (player.score || 0) + pts;
       player.lastPointsEarned = pts;
     } else {
       player.streak = 0;
-      player.lastPointsEarned = 0;
+      if (playerAnswer !== undefined) {
+        // Ha risposto in modo errato: perde punti (minimo 0 per fair play)
+        const penalty = -PENALTY_WRONG_ANSWER;
+        player.score = Math.max(0, (player.score || 0) + penalty);
+        player.lastPointsEarned = penalty;
+        console.log(`❌ [Malus Errore] ${player.nickname} (${pid}) ha sbagliato: -${PENALTY_WRONG_ANSWER} punti (Totale: ${player.score})`);
+      } else {
+        // Tempo scaduto senza aver toccato pulsanti
+        player.lastPointsEarned = 0;
+      }
     }
   }
 
@@ -548,7 +647,9 @@ function revealAnswer() {
 }
 
 function startCountdown() {
+  clearBotTimeouts();
   gameState.status = 'COUNTDOWN';
+  gameState.isPaused = false;
   db.save();
 
   let count = 3;
@@ -566,9 +667,12 @@ function startCountdown() {
 }
 
 function launchQuestion() {
+  clearBotTimeouts();
   gameState.status = 'QUESTION';
   gameState.answersCurrentQuestion = {};
   gameState.answerStats = [0, 0, 0, 0];
+  gameState.isPaused = false;
+  gameState.questionStartTime = Date.now();
 
   const currentQ = questions[gameState.currentQuestionIndex];
   if (!currentQ) {
@@ -576,7 +680,13 @@ function launchQuestion() {
     return;
   }
 
-  // Ammetti in gara tutti i giocatori che erano in sala d'attesa per questa nuova domanda!
+  // Calibrazione tempo: se la domanda è molto lunga, dai almeno 25s di tempo
+  const totalLength = (currentQ.question || '').length + (currentQ.options || []).join('').length;
+  if (!currentQ.timeLimit && totalLength > 160) {
+    currentQ.timeLimit = 25;
+  }
+
+  // Ammetti in gara tutti i giocatori che erano in sala d'attesa per questa nuova domanda
   let admittedCount = 0;
   for (const pid of Object.keys(gameState.players)) {
     const p = gameState.players[pid];
@@ -590,11 +700,14 @@ function launchQuestion() {
   }
 
   gameState.timeRemaining = currentQ.timeLimit || 20;
-  db.save(); // SALVA NEL DATABASE
+  gameState.timeLimitMs = gameState.timeRemaining * 1000;
 
-  // Conta i giocatori attivi e connessi nel gioco
+  // Conta i giocatori ammessi e registrati per questa manche
   const activePlayers = Object.values(gameState.players).filter(p => p.connected && !p.waitingRoom);
   const totalPlayers = Math.max(1, activePlayers.length);
+  gameState.expectedVotersCount = totalPlayers;
+
+  db.save(); // SALVA NEL DATABASE
 
   // Notifica host e giocatori
   io.emit('game:questionStarted', {
@@ -612,6 +725,25 @@ function launchQuestion() {
   startQuestionTimer();
   sendSyncState();
   if (admittedCount > 0) emitPlayersUpdated();
+
+  // Se ci sono bot attivi, pianifica le loro risposte realistiche scaglionate
+  const activeBots = Object.values(gameState.players).filter(p => p.isBot && p.connected && !p.waitingRoom);
+  if (activeBots.length > 0) {
+    activeBots.forEach(bot => {
+      // Tempo di reazione casuale tra 2.2s e (timeLimit - 2)s
+      const maxDelay = Math.max(4000, (gameState.timeRemaining - 2.5) * 1000);
+      const delayMs = Math.floor(2200 + Math.random() * (maxDelay - 2200));
+      const t = setTimeout(() => {
+        if (gameState.status === 'QUESTION' && !gameState.answersCurrentQuestion[bot.id]) {
+          // 75% probabilità risposta corretta
+          const pickCorrect = Math.random() < 0.75;
+          const choice = pickCorrect ? currentQ.correctIndex : Math.floor(Math.random() * 4);
+          processPlayerAnswer(bot.id, choice);
+        }
+      }, delayMs);
+      botTimeouts.push(t);
+    });
+  }
 }
 
 function showLeaderboard() {
@@ -861,40 +993,34 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Giocatore invia risposta
-  socket.on('player:submitAnswer', ({ optionIndex, playerId }) => {
+  // Funzione unificata per processare la risposta con tempo al millisecondo
+  function processPlayerAnswer(pid, optionIndex, socketInstance = null) {
     if (gameState.status !== 'QUESTION') {
       console.log(`[submitAnswer] Risposta rifiutata per stato ${gameState.status}`);
       return;
     }
-    const pid = playerId || socketToPlayerId[socket.id];
-    if (!pid) {
-      console.warn('[submitAnswer] Nessun playerId associabile al socket:', socket.id);
-      return;
-    }
 
-    // Assicura associazione socket -> playerId e appartenenza alla stanza
-    socketToPlayerId[socket.id] = pid;
-    socket.join(pid);
-
-    let player = gameState.players[pid];
-    if (!player) return;
-
-    // Chi è in sala d'attesa non partecipa alla domanda in corso
-    if (player.waitingRoom) return;
+    const player = gameState.players[pid];
+    if (!player || player.waitingRoom) return;
 
     player.connected = true;
 
     if (!gameState.answersCurrentQuestion) gameState.answersCurrentQuestion = {};
     if (gameState.answersCurrentQuestion[pid] !== undefined) {
       // Ha già risposto: rimanda ack senza duplicare
-      socket.emit('player:answerAck', { optionIndex: gameState.answersCurrentQuestion[pid] });
+      if (socketInstance) {
+        socketInstance.emit('player:answerAck', { optionIndex: gameState.answersCurrentQuestion[pid] });
+      } else {
+        io.to(pid).emit('player:answerAck', { optionIndex: gameState.answersCurrentQuestion[pid] });
+      }
       return;
     }
 
+    const timeSpentMs = Math.max(0, Date.now() - (gameState.questionStartTime || Date.now()));
     gameState.answersCurrentQuestion[pid] = optionIndex;
     player.lastAnswer = optionIndex;
-    player.lastAnswerTime = gameState.timeRemaining;
+    player.lastAnswerTimeMs = timeSpentMs;
+    player.lastAnswerTime = Math.max(0, gameState.timeRemaining);
 
     if (optionIndex >= 0 && optionIndex < 4) {
       if (!gameState.answerStats) gameState.answerStats = [0, 0, 0, 0];
@@ -908,16 +1034,65 @@ io.on('connection', (socket) => {
     const totalPlayers = Math.max(1, activePlayers.length);
     const answeredCount = Object.keys(gameState.answersCurrentQuestion).length;
 
-    console.log(`[Risposta OK] ${player.nickname} (${pid}) -> Opzione ${optionIndex}. Progresso: ${answeredCount}/${totalPlayers}`);
+    console.log(`[Risposta OK] ${player.nickname} (${pid}) -> Opzione ${optionIndex} in ${timeSpentMs}ms. (${answeredCount}/${totalPlayers})`);
 
-    socket.emit('player:answerAck', { optionIndex });
+    if (socketInstance) {
+      socketInstance.emit('player:answerAck', { optionIndex });
+    } else {
+      io.to(pid).emit('player:answerAck', { optionIndex });
+    }
+
     io.emit('game:answersCountUpdated', { answeredCount, totalPlayers });
 
-    // Se tutti i partecipanti attivi hanno risposto, termina subito il tempo e svela la risposta!
-    if (answeredCount >= totalPlayers && totalPlayers > 0) {
-      console.log(`[Tutti hanno risposto] ${answeredCount}/${totalPlayers} risposte ricevute. Termino il tempo e svelo la risposta!`);
+    // Chiudi anticipatamente SOLO se tutti i votanti attesi registrati alla manche hanno risposto
+    const expectedCount = gameState.expectedVotersCount || totalPlayers;
+    if (answeredCount >= expectedCount && expectedCount > 0) {
+      console.log(`[Tutti hanno risposto] ${answeredCount}/${expectedCount} risposte ricevute. Termino il tempo e svelo la risposta!`);
       revealAnswer();
     }
+  }
+
+  // Giocatore invia risposta
+  socket.on('player:submitAnswer', ({ optionIndex, playerId }) => {
+    const pid = playerId || socketToPlayerId[socket.id];
+    if (!pid) {
+      console.warn('[submitAnswer] Nessun playerId associabile al socket:', socket.id);
+      return;
+    }
+
+    // Assicura associazione socket -> playerId e appartenenza alla stanza
+    socketToPlayerId[socket.id] = pid;
+    socket.join(pid);
+
+    processPlayerAnswer(pid, optionIndex, socket);
+  });
+
+  // Pausa / Freeze del timer da Regia
+  socket.on('admin:togglePause', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:togglePause')) return;
+    if (gameState.status === 'QUESTION') {
+      gameState.isPaused = !gameState.isPaused;
+      console.log(`⏸️ [Admin Socket] Timer domanda ${gameState.isPaused ? 'SOSPESO IN PAUSA' : 'RIPRESO'}`);
+      const currentQ = questions[gameState.currentQuestionIndex];
+      io.emit('game:timerTick', { 
+        timeRemaining: gameState.timeRemaining, 
+        timeLimit: currentQ ? currentQ.timeLimit || 20 : 20, 
+        isPaused: gameState.isPaused 
+      });
+      io.emit('game:pauseToggled', { isPaused: gameState.isPaused });
+      sendSyncState();
+    }
+  });
+
+  // Simulatore Bot di Prova per test maxischermo
+  socket.on('admin:spawnBots', ({ count } = {}) => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:spawnBots')) return;
+    spawnBots(count || 6);
+  });
+
+  socket.on('admin:removeBots', () => {
+    if (!isAuthorizedAdminSocket(socket, 'admin:removeBots')) return;
+    removeBots();
   });
 
   // Comandi Host / Admin (Riservati agli operatori autenticati)

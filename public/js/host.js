@@ -179,15 +179,41 @@ socket.on('game:questionStarted', (data) => {
   }
 });
 
-// Timer Tick
-socket.on('game:timerTick', ({ timeRemaining }) => {
+// Sblocco Audio automatico su Maxischermo
+const audioUnlockPill = document.getElementById('host-audio-unlock-pill');
+function unlockAudioShow() {
+  window.sounds.unlockAudio();
+  if (audioUnlockPill) {
+    audioUnlockPill.style.display = 'none';
+  }
+}
+if (audioUnlockPill) {
+  audioUnlockPill.addEventListener('click', unlockAudioShow);
+}
+window.addEventListener('click', () => { window.sounds.unlockAudio(); }, { once: true });
+
+// Timer Tick live con audio incalzante e indicatore di Pausa
+socket.on('game:timerTick', ({ timeRemaining, isPaused }) => {
   const timerDisplay = document.getElementById('timer-display');
-  timerDisplay.textContent = timeRemaining;
+  if (timerDisplay) {
+    timerDisplay.textContent = timeRemaining;
+  }
+
+  const pauseInd = document.getElementById('host-pause-indicator');
+  if (pauseInd) {
+    pauseInd.style.display = isPaused ? 'flex' : 'none';
+  }
+
+  if (isPaused) return;
+
   if (timeRemaining <= 5 && timeRemaining > 0) {
-    timerDisplay.classList.add('danger');
+    if (timerDisplay) timerDisplay.classList.add('danger');
+    window.sounds.playTickUrgent();
+  } else if (timeRemaining > 5) {
+    if (timerDisplay) timerDisplay.classList.remove('danger');
     window.sounds.playTick();
   } else if (timeRemaining === 0) {
-    timerDisplay.classList.remove('danger');
+    if (timerDisplay) timerDisplay.classList.remove('danger');
   }
 });
 
@@ -198,7 +224,14 @@ socket.on('game:answersCountUpdated', ({ answeredCount, totalPlayers }) => {
 
 // Answer Revealed
 socket.on('game:answerRevealed', ({ correctIndex, explanation, answerStats, leaderboard }) => {
-  window.sounds.playCorrect();
+  const pauseInd = document.getElementById('host-pause-indicator');
+  if (pauseInd) pauseInd.style.display = 'none';
+
+  // Suono di fine tempo + rivelazione
+  window.sounds.playTimeUp();
+  setTimeout(() => {
+    window.sounds.playCorrect();
+  }, 250);
 
   // Ferma e azzera il timer visivo immediatamente
   const timerDisplay = document.getElementById('timer-display');
@@ -269,12 +302,19 @@ function renderLeaderboard(leaderboard, isLastQuestion) {
     else if (p.rank === 3) medal = '🥉';
 
     const streakBadge = p.streak > 1 ? `<span class="streak-badge">🔥 x${p.streak}</span>` : '';
+    let deltaBadge = '';
+    if (p.lastPointsEarned > 0) {
+      deltaBadge = `<span class="score-delta positive">+${p.lastPointsEarned}</span>`;
+    } else if (p.lastPointsEarned < 0) {
+      deltaBadge = `<span class="score-delta negative">${p.lastPointsEarned}</span>`;
+    }
 
     row.innerHTML = `
       <div class="rank-num">${medal}</div>
       <div class="avatar">${p.avatar}</div>
       <div class="player-name">${p.nickname}</div>
       ${streakBadge}
+      ${deltaBadge}
       <div class="score">${(p.score || 0).toLocaleString()} pt</div>
     `;
     listEl.appendChild(row);

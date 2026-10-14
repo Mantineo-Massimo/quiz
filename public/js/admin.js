@@ -79,6 +79,8 @@ function updateLiveStatus(state) {
   if (!state) return;
   lastState = state;
 
+  updatePauseButtonUI(!!state.isPaused);
+
   const currentIdx = state.currentQuestionIndex || 0;
   const totalQ = state.totalQuestions || 15;
   const isLastQ = currentIdx >= totalQ - 1;
@@ -271,6 +273,16 @@ socket.on('game:timerTick', ({ timeRemaining }) => {
   }
 });
 
+socket.on('game:timerTick', ({ timeRemaining, isPaused }) => {
+  if (lastState && lastState.status === 'QUESTION') {
+    statusText.textContent = isPaused ? `⏸️ IN PAUSA (${timeRemaining}s)` : `🟡 DOMANDA IN CORSO (${timeRemaining}s)`;
+    if (hubActionTitle) {
+      hubActionTitle.textContent = isPaused ? `⏸️ TIMER IN PAUSA (${timeRemaining}s rimasti)` : `⏱️ Domanda in corso (${timeRemaining}s rimasti)`;
+    }
+  }
+  updatePauseButtonUI(!!isPaused);
+});
+
 socket.on('game:answersCountUpdated', ({ answeredCount, totalPlayers }) => {
   answersIndicator.textContent = `${answeredCount} / ${totalPlayers}`;
 });
@@ -306,6 +318,50 @@ const btnNextQuestion = document.getElementById('admin-btn-next-question');
 if (btnNextQuestion) {
   btnNextQuestion.addEventListener('click', () => {
     socket.emit('admin:nextQuestion');
+  });
+}
+
+// Toggle Pausa Timer da Regia
+const btnPauseToggle = document.getElementById('admin-btn-pause-toggle');
+if (btnPauseToggle) {
+  btnPauseToggle.addEventListener('click', () => {
+    socket.emit('admin:togglePause');
+  });
+}
+
+function updatePauseButtonUI(isPaused) {
+  if (!btnPauseToggle) return;
+  if (isPaused) {
+    btnPauseToggle.textContent = '▶️ Riprendi Timer';
+    btnPauseToggle.style.background = 'rgba(16, 185, 129, 0.25)';
+    btnPauseToggle.style.borderColor = '#10b981';
+    btnPauseToggle.style.color = '#34d399';
+  } else {
+    btnPauseToggle.textContent = '⏸️ Pausa / Congela Timer';
+    btnPauseToggle.style.background = 'rgba(245, 158, 11, 0.25)';
+    btnPauseToggle.style.borderColor = '#f59e0b';
+    btnPauseToggle.style.color = '#f59e0b';
+  }
+}
+
+socket.on('game:pauseToggled', ({ isPaused }) => {
+  updatePauseButtonUI(isPaused);
+});
+
+// Simulatore Bot di Prova
+const btnSpawnBots = document.getElementById('btn-spawn-bots');
+if (btnSpawnBots) {
+  btnSpawnBots.addEventListener('click', () => {
+    socket.emit('admin:spawnBots', { count: 6 });
+  });
+}
+
+const btnRemoveBots = document.getElementById('btn-remove-bots');
+if (btnRemoveBots) {
+  btnRemoveBots.addEventListener('click', () => {
+    if (confirm('Vuoi rimuovere tutti i bot simulati dalla sessione?')) {
+      socket.emit('admin:removeBots');
+    }
   });
 }
 

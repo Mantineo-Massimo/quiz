@@ -1,5 +1,56 @@
 const socket = io();
 
+// Feedback Aptico Mobile (Vibrazione)
+function triggerHaptic(type = 'tap') {
+  if (!navigator.vibrate) return;
+  try {
+    if (type === 'tap') navigator.vibrate(40);
+    else if (type === 'correct') navigator.vibrate([60, 40, 90]);
+    else if (type === 'wrong') navigator.vibrate([120, 60, 120]);
+    else if (type === 'countdown') navigator.vibrate(25);
+    else if (type === 'alert') navigator.vibrate([80, 50, 80]);
+  } catch (e) {}
+}
+
+// Screen WakeLock API: impedisce lo spegnimento dello schermo smartphone durante il quiz
+let activeWakeLock = null;
+async function requestScreenWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      activeWakeLock = await navigator.wakeLock.request('screen');
+      console.log('💡 [WakeLock] Schermo bloccato attivo per il quiz.');
+      activeWakeLock.addEventListener('release', () => {
+        activeWakeLock = null;
+      });
+    } catch (err) {
+      console.warn('WakeLock non consentito o non supportato:', err);
+    }
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (activeWakeLock === null && document.visibilityState === 'visible' && isJoined) {
+    await requestScreenWakeLock();
+  }
+});
+
+// Banner Riconnessione Socket
+const reconnectBanner = document.getElementById('player-reconnect-banner');
+socket.on('disconnect', () => {
+  if (reconnectBanner) reconnectBanner.style.display = 'block';
+});
+
+socket.on('connect', () => {
+  if (reconnectBanner) reconnectBanner.style.display = 'none';
+  // Se già iscritto, ripristina la sessione all'istante
+  if (isJoined && myPlayerId) {
+    const reg = getStoredRegistration();
+    if (reg) {
+      socket.emit('player:join', { ...reg, playerId: myPlayerId });
+    }
+  }
+});
+
 // Views
 const views = {
   join: document.getElementById('view-join'),
@@ -534,15 +585,24 @@ function handleJoin() {
     if (!academicYear) { errors.push('Anno di Corso'); if (selectYear) selectYear.classList.add('invalid'); }
   }
 
+  // Validazione Consenso Privacy GDPR
+  const cbPrivacy = document.getElementById('reg-privacy');
+  if (cbPrivacy && !cbPrivacy.checked) {
+    errors.push('Consenso Privacy obbligatorio');
+  }
+
   if (errors.length > 0) {
     if (joinErrorBox && joinErrorText) {
-      joinErrorText.textContent = `Compila i seguenti campi: ${errors.join(', ')}`;
+      joinErrorText.textContent = `Compila o correggi: ${errors.join(', ')}`;
       joinErrorBox.style.display = 'flex';
       joinErrorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    triggerHaptic('alert');
     return;
   }
+
+  // Attiva WakeLock per non far spegnere lo schermo durante la partita
+  requestScreenWakeLock();
 
   // Nome visualizzato sul maxischermo
   let customNick = inputNick ? inputNick.value.trim() : '';
@@ -620,6 +680,8 @@ socket.on('player:joined', (data) => {
     lcdDisplay.style.display = 'flex';
     document.getElementById('lcd-nickname').textContent = data.nickname;
     document.getElementById('lcd-avatar').textContent = data.avatar;
+    const lcdScore = document.getElementById('lcd-score');
+    if (lcdScore) lcdScore.textContent = data.score || 0;
   }
 
   document.getElementById('my-avatar-display').textContent = data.avatar;
@@ -713,7 +775,7 @@ padButtons.forEach(btn => {
     if (answerSubmitted) return;
     answerSubmitted = true;
     const optIndex = parseInt(btn.getAttribute('data-opt'), 10);
-    if (navigator.vibrate) navigator.vibrate([50, 50]);
+    triggerHaptic('tap');
     // Invia sempre sia optionIndex sia playerId persistente
     socket.emit('player:submitAnswer', { optionIndex: optIndex, playerId: myPlayerId });
     showView('answered');
@@ -725,31 +787,98 @@ socket.on('player:answerAck', () => {
   showView('answered');
 });
 
-// Round Result: i giocatori vedono solo che la risposta è stata registrata o se il tempo è scaduto
-socket.on('player:roundResult', ({ isCorrect, selectedOption }) => {
+// Round Result: i giocatori vedono il responso esatto/errato con punteggio o penalità malus
+socket.on('player:roundResult', ({ isCorrect, selectedOption, pointsEarned, totalScore, streak, rank, totalPlayers }) => {
   if (!isJoined) return;
-  showView('answered');
 
-  const aTitle = document.getElementById('answered-title');
-  const aSub = document.getElementById('answered-subtitle');
-  if (selectedOption !== undefined && selectedOption !== null) {
-    if (aTitle) aTitle.textContent = 'RISPOSTA REGISTRATA! ⚡';
-    if (aSub) aSub.innerHTML = 'Risposta ricevuta in tempo.<br>Guarda il maxischermo per la soluzione!';
+  // Mostra vista del risultato con animazione card
+  showView('result');
+
+  const resultBox = document.getElementById('result-box');
+  const resultEmoji = document.getElementById('result-emoji');
+  const resultStatus = document.getElementById('result-status');
+  const resultPts = document.getElementById('result-pts');
+  const resultStreak = document.getElementById('result-streak');
+  const resultRank = document.getElementById('result-rank');
+  const lcdScore = document.getElementById('lcd-score');
+
+  if (lcdScore && totalScore !== undefined) {
+    lcdScore.textContent = totalScore;
+  }
+
+  if (isCorrect) {
+    if (resultBox) {
+      resultBox.className = 'round-result-card correct';
+    }
+    if (resultEmoji) resultEmoji.textContent = '🎉';
+    if (resultStatus) {
+      resultStatus.textContent = 'ESATTO!';
+      resultStatus.style.color = '#22c55e';
+    }
+    if (resultPts) {
+      resultPts.textContent = `+${pointsEarned || 0} Punti`;
+      resultPts.style.color = 'var(--accent-gold)';
+    }
+    if (resultStreak) {
+      if (streak > 1) {
+        resultStreak.textContent = `🔥 Serie di risposte esatte: ${streak}!`;
+      } else {
+        resultStreak.textContent = '';
+      }
+    }
+    triggerHaptic('correct');
+    if (window.sounds) window.sounds.playCorrect();
   } else {
-    if (aTitle) aTitle.textContent = 'TEMPO SCADUTO! ⌛';
-    if (aSub) aSub.innerHTML = 'Nessuna risposta inviata in tempo.<br>Occhio al maxischermo!';
+    if (resultBox) {
+      resultBox.className = 'round-result-card wrong';
+    }
+    if (selectedOption !== undefined && selectedOption !== null) {
+      // Risposta errata -> penalità malus
+      if (resultEmoji) resultEmoji.textContent = '❌';
+      if (resultStatus) {
+        resultStatus.textContent = 'RISPOSTA ERRATA!';
+        resultStatus.style.color = '#e11d48';
+      }
+      if (resultPts) {
+        resultPts.textContent = `${pointsEarned || 0} Punti`;
+        resultPts.style.color = '#ef4444';
+      }
+      if (resultStreak) {
+        resultStreak.textContent = '💥 Malus Errore: -200 pt | Serie azzerata';
+      }
+    } else {
+      // Tempo scaduto senza aver toccato pulsanti
+      if (resultEmoji) resultEmoji.textContent = '⌛';
+      if (resultStatus) {
+        resultStatus.textContent = 'TEMPO SCADUTO!';
+        resultStatus.style.color = '#f59e0b';
+      }
+      if (resultPts) {
+        resultPts.textContent = '0 Punti';
+        resultPts.style.color = '#94a3b8';
+      }
+      if (resultStreak) {
+        resultStreak.textContent = 'Nessuna risposta inviata';
+      }
+    }
+    triggerHaptic('wrong');
+    if (window.sounds) window.sounds.playWrong();
+  }
+
+  if (resultRank) {
+    if (rank && totalPlayers) {
+      resultRank.textContent = `POSIZIONE ATTUALE: #${rank} di ${totalPlayers} (Punti: ${totalScore !== undefined ? totalScore : 0})`;
+    } else if (rank) {
+      resultRank.textContent = `POSIZIONE ATTUALE: #${rank} (Punti: ${totalScore !== undefined ? totalScore : 0})`;
+    } else {
+      resultRank.textContent = `PUNTEGGIO TOTALE: ${totalScore !== undefined ? totalScore : 0} PT`;
+    }
   }
 
   const timerBadge = document.getElementById('player-timer-badge');
   if (timerBadge) {
     timerBadge.textContent = '⏱️ 0s';
     timerBadge.classList.remove('danger');
-  }
-
-  if (isCorrect) {
-    window.sounds.playCorrect();
-  } else {
-    window.sounds.playWrong();
   }
 });
 
@@ -772,6 +901,7 @@ socket.on('game:finalReveal', () => {
 socket.on('game:countdown', ({ count }) => {
   if (!isJoined) return;
   showView('countdown');
+  triggerHaptic('countdown');
   const countEl = document.getElementById('phone-countdown-number');
   if (countEl) {
     countEl.textContent = count;

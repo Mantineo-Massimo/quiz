@@ -40,23 +40,61 @@ class SoundManager {
     osc.stop(now + 0.2);
   }
 
-  playTick() {
+  unlockAudio() {
+    this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playTickUrgent() {
     if (this.muted) return;
     this.init();
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(600, now);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(880, now); // Nota più acuta e incalzante
+    osc.frequency.exponentialRampToValueAtTime(1100, now + 0.06);
 
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.05);
+    osc.stop(now + 0.08);
+  }
+
+  playTimeUp() {
+    if (this.muted) return;
+    this.init();
+    const now = this.ctx.currentTime;
+    // Gong / Buzzer perentorio sintetizzato
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(140, now);
+    osc1.frequency.exponentialRampToValueAtTime(70, now + 0.6);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(145, now);
+    osc2.frequency.exponentialRampToValueAtTime(65, now + 0.6);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.65);
+    osc2.stop(now + 0.65);
   }
 
   playQuestionStart() {

@@ -119,6 +119,9 @@
           <button id="admin-btn-next-question" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
             ➡️ Prossima Domanda
           </button>
+          <button id="admin-btn-pause-toggle" class="btn btn-glass" style="background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #f59e0b;">
+            ⏸️ Pausa / Congela Timer
+          </button>
           <button id="admin-btn-show-leaderboard" class="btn btn-glass" style="background: rgba(139, 92, 246, 0.25); border-color: #8b5cf6;">
             📊 Mostra Classifica Ora
           </button>
@@ -153,6 +156,25 @@
 
     <!-- TAB 2: GIOCATORI CONNESSI & ANAGRAFICA -->
     <div id="tab-players" class="admin-panel">
+      <!-- Simulatore Bot per Test Regia e Maxischermo -->
+      <div style="background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.6rem;">🤖</span>
+          <div>
+            <div style="font-weight: 800; color: #c084fc; font-size: 0.95rem;">Simulatore Bot per Test Maxischermo &amp; Podio</div>
+            <div style="font-size: 0.82rem; color: #cbd5e1; margin-top: 2px;">Crea matricole virtuali che rispondono durante le domande per collaudare animazioni, grafici e podio.</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" id="btn-spawn-bots" class="btn btn-glass" style="background: rgba(139, 92, 246, 0.25); border-color: #a855f7; font-size: 0.85rem; padding: 8px 16px; font-weight: 700;">
+            🤖 Genera 6 Bot
+          </button>
+          <button type="button" id="btn-remove-bots" class="btn btn-glass" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5; font-size: 0.85rem; padding: 8px 16px; font-weight: 700;">
+            🧹 Rimuovi Bot
+          </button>
+        </div>
+      </div>
+
       <!-- Metriche Registrazioni -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
         <div style="background: rgba(16, 24, 43, 0.85); border: 1px solid var(--border-glass); border-radius: 14px; padding: 14px 18px;">
