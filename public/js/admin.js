@@ -355,7 +355,7 @@ const playerSearchInput = document.getElementById('admin-player-search');
 const filterButtons = document.querySelectorAll('.admin-filter-btn');
 
 let allAdminPlayers = [];
-let currentFilter = 'all';
+let currentFilter = 'connected';
 let searchQuery = '';
 
 if (playerSearchInput) {
@@ -369,7 +369,7 @@ filterButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     filterButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentFilter = btn.getAttribute('data-filter') || 'all';
+    currentFilter = btn.getAttribute('data-filter') || 'connected';
     renderAdminPlayers();
   });
 });
@@ -395,6 +395,7 @@ function renderAdminPlayers() {
 
   // Applica filtri
   let filtered = allAdminPlayers.filter(p => {
+    if (currentFilter === 'connected' && !p.connected) return false;
     if (currentFilter === 'unime' && !p.isUnime) return false;
     if (currentFilter === 'external' && p.isUnime) return false;
 
@@ -420,7 +421,7 @@ function renderAdminPlayers() {
   if (filtered.length === 0) {
     adminPlayersList.innerHTML = `
       <div style="color: rgba(255,255,255,0.6); padding: 24px; text-align: center; background: rgba(0,0,0,0.25); border-radius: 14px;">
-        ${allAdminPlayers.length === 0 ? 'Nessun partecipante registrato al momento.' : 'Nessun partecipante corrisponde ai filtri di ricerca.'}
+        ${allAdminPlayers.length === 0 ? 'Nessun partecipante nella sessione al momento.' : (currentFilter === 'connected' ? 'Nessun partecipante attualmente connesso / online.' : 'Nessun partecipante corrisponde ai filtri di ricerca.')}
       </div>
     `;
     return;

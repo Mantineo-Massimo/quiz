@@ -29,12 +29,15 @@ class Database {
         // Carica archivio storico accounts
         const loadedAccounts = parsed.accounts || {};
 
-        // Al caricamento, resetta connected a false per i giocatori attivi
+        // Al caricamento, resetta connected a false per i giocatori attivi.
+        // Se la partita era in LOBBY, non mantenere giocatori offline nella stanza d'attesa attiva.
         const loadedPlayers = {};
         if (parsed.players) {
           for (const [pid, p] of Object.entries(parsed.players)) {
-            loadedPlayers[pid] = { ...p, connected: false };
-            // Se non ancora presente nell'archivio storico, sincronizza
+            if (parsed.status !== 'LOBBY') {
+              loadedPlayers[pid] = { ...p, connected: false };
+            }
+            // Sincronizza sempre nell'archivio storico permanente
             if (!loadedAccounts[pid]) {
               loadedAccounts[pid] = { ...p, connected: false };
             }

@@ -30,7 +30,7 @@
 
     <div class="admin-tabs">
       <button class="tab-btn active" data-tab="tab-control">🎮 Controllo Gioco</button>
-      <button class="tab-btn" data-tab="tab-players">👥 Giocatori Connessi (<span id="admin-player-count">0</span>)</button>
+      <button class="tab-btn" data-tab="tab-players">👥 Sessione Partita (<span id="admin-player-count">0</span> online)</button>
       <button class="tab-btn" data-tab="tab-accounts">🗂️ Archivio Account (<span id="admin-account-count">0</span>)</button>
       <button class="tab-btn" data-tab="tab-questions">📝 Modifica Domande (<span id="admin-q-count">0</span>)</button>
       <button class="tab-btn" data-tab="tab-network">🌐 Rete &amp; QR Code</button>
@@ -177,7 +177,8 @@
         
         <div style="display: flex; gap: 10px; align-items: center;">
           <div class="admin-filter-pills" style="display: flex; gap: 6px;">
-            <button type="button" class="admin-filter-btn active" data-filter="all">Tutti</button>
+            <button type="button" class="admin-filter-btn active" data-filter="connected">⚡ Solo Connessi Ora</button>
+            <button type="button" class="admin-filter-btn" data-filter="all">Tutti nella Sessione</button>
             <button type="button" class="admin-filter-btn" data-filter="unime">🎓 UniMe</button>
             <button type="button" class="admin-filter-btn" data-filter="external">🌍 Esterni</button>
           </div>

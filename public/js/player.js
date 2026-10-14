@@ -833,3 +833,15 @@ socket.on('player:kicked', () => {
   showView('join');
   alert('Pulsantiera disconnessa dall\'organizzatore.');
 });
+
+// Notifica immediata di disconnessione quando si chiude o si naviga via dalla pagina
+function notifyLeavePage() {
+  if (socket && socket.connected) {
+    try {
+      socket.emit('player:leave', { playerId: myPlayerId });
+      socket.disconnect();
+    } catch (e) {}
+  }
+}
+window.addEventListener('beforeunload', notifyLeavePage);
+window.addEventListener('pagehide', notifyLeavePage);

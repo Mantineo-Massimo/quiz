@@ -477,10 +477,10 @@
         }
       });
 
-      socket.on('syncState', (state) => {
+      socket.on('game:syncState', (state) => {
         if (!state) return;
-        if (countPlayers && state.playersCount !== undefined) {
-          countPlayers.textContent = state.playersCount;
+        if (countPlayers && state.connectedCount !== undefined) {
+          countPlayers.textContent = state.connectedCount;
         }
         if (countQuestions && state.totalQuestions !== undefined) {
           countQuestions.textContent = state.totalQuestions;
@@ -516,6 +516,12 @@
             default:
               statusLabel.textContent = state.status || 'Pronto';
           }
+        }
+      });
+
+      socket.on('host:playersUpdated', (players) => {
+        if (Array.isArray(players) && countPlayers) {
+          countPlayers.textContent = players.length;
         }
       });
 

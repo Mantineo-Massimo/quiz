@@ -9,7 +9,9 @@ const QRCode = require('qrcode');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: '*' },
+  pingInterval: 3000,
+  pingTimeout: 4000
 });
 
 const PORT = process.env.PORT || 3000;
@@ -960,15 +962,25 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Disconnessione socket
-  socket.on('disconnect', () => {
-    const pid = socketToPlayerId[socket.id];
-    delete socketToPlayerId[socket.id];
+  // Gestore unificato disconnessione / uscita giocatore
+  function handlePlayerDisconnect(socketInstance) {
+    const pid = socketToPlayerId[socketInstance.id];
+    delete socketToPlayerId[socketInstance.id];
+
     if (pid && gameState.players[pid]) {
-      // Disconnette solo se questo socket è quello registrato per il giocatore
-      if (gameState.players[pid].socketId === socket.id) {
+      // Disconnette se questo socket era quello associato al giocatore
+      if (gameState.players[pid].socketId === socketInstance.id) {
         gameState.players[pid].connected = false;
+
+        // Se siamo in LOBBY (la partita non è ancora iniziata),
+        // chiudere la pagina significa abbandonare la stanza d'attesa.
+        // Rimuoviamo il giocatore dalla lobby attiva (il suo account resta salvato nello storico 'accounts').
+        if (gameState.status === 'LOBBY') {
+          delete gameState.players[pid];
+          console.log(`👋 [Lobby] Giocatore ${pid} ha chiuso la pagina ed è uscito dalla stanza d'attesa.`);
+        }
       }
+
       db.save();
       emitPlayersUpdated();
       sendSyncState();
@@ -983,6 +995,16 @@ io.on('connection', (socket) => {
         }
       }
     }
+  }
+
+  // Notifica immediata di chiusura/navigazione pagina dal browser
+  socket.on('player:leave', () => {
+    handlePlayerDisconnect(socket);
+  });
+
+  // Disconnessione socket (chiusura finestra, caduta rete, timeout)
+  socket.on('disconnect', () => {
+    handlePlayerDisconnect(socket);
   });
 });
 
