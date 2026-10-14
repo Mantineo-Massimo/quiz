@@ -10,6 +10,7 @@ const defaultState = {
   finalRevealStep: 0,
   podiumStep: 0,
   adminPassword: process.env.ADMIN_PASSWORD || 'unime2026',
+  sessions: [], // token di sessione admin/host persistenti
   players: {}, // playerId -> giocatori nella partita/sessione attiva
   accounts: {}, // playerId -> archivio storico permanente di tutti i giocatori registrati in passato
   answersCurrentQuestion: {}, // playerId -> optionIndex
@@ -30,14 +31,11 @@ class Database {
         // Carica archivio storico accounts
         const loadedAccounts = parsed.accounts || {};
 
-        // Al caricamento, resetta connected a false per i giocatori attivi.
-        // Se la partita era in LOBBY, non mantenere giocatori offline nella stanza d'attesa attiva.
+        // Al caricamento, mantieni tutti i giocatori registrati marcandoli offline finché non si ricollegano
         const loadedPlayers = {};
         if (parsed.players) {
           for (const [pid, p] of Object.entries(parsed.players)) {
-            if (parsed.status !== 'LOBBY') {
-              loadedPlayers[pid] = { ...p, connected: false };
-            }
+            loadedPlayers[pid] = { ...p, connected: false };
             // Sincronizza sempre nell'archivio storico permanente
             if (!loadedAccounts[pid]) {
               loadedAccounts[pid] = { ...p, connected: false };
@@ -51,6 +49,7 @@ class Database {
           ...defaultState,
           ...parsed,
           adminPassword: parsed.adminPassword || process.env.ADMIN_PASSWORD || 'unime2026',
+          sessions: parsed.sessions || [],
           finalRevealStep: parsed.finalRevealStep || 0,
           podiumStep: parsed.podiumStep || 0,
           players: loadedPlayers,
@@ -74,6 +73,7 @@ class Database {
         finalRevealStep: this.state.finalRevealStep || 0,
         podiumStep: this.state.podiumStep || 0,
         adminPassword: this.state.adminPassword || process.env.ADMIN_PASSWORD || 'unime2026',
+        sessions: this.state.sessions || [],
         players: this.state.players,
         accounts: this.state.accounts,
         answersCurrentQuestion: this.state.answersCurrentQuestion,

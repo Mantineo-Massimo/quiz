@@ -23,8 +23,8 @@ let customPublicUrl = process.env.PUBLIC_URL || '';
 const db = require('./database');
 const gameState = db.state;
 
-// Sessioni autenticate attive in memoria (Admin / Host)
-const validSessions = new Set();
+// Sessioni autenticate attive (Admin / Host) persistite su db.json
+const validSessions = new Set(db.state.sessions || []);
 
 // Parser leggero dei cookie HTTP
 function parseCookies(req) {
@@ -191,6 +191,8 @@ app.post('/api/login', (req, res) => {
   if (password && password.trim() === currentPassword.trim()) {
     const token = crypto.randomBytes(32).toString('hex');
     validSessions.add(token);
+    db.state.sessions = Array.from(validSessions);
+    db.save();
 
     // Imposta cookie di sessione (validità 30 giorni, HttpOnly, SameSite Lax)
     res.setHeader('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
@@ -206,6 +208,8 @@ app.post('/api/logout', (req, res) => {
   const cookies = parseCookies(req);
   if (cookies.auth_token) {
     validSessions.delete(cookies.auth_token);
+    db.state.sessions = Array.from(validSessions);
+    db.save();
   }
   res.setHeader('Set-Cookie', 'auth_token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT');
   console.log('🚪 [Sicurezza] Sessione disconnessa.');
@@ -821,6 +825,7 @@ io.on('connection', (socket) => {
   sendSyncState(socket);
   socket.emit('host:playersUpdated', Object.values(gameState.players).filter(p => p.connected));
   socket.emit('admin:playersUpdated', Object.values(gameState.players));
+  socket.emit('admin:accountsUpdated', Object.values(gameState.accounts || {}));
 
   // Giocatore si registra o si riconnette
   socket.on('player:join', (data = {}) => {
@@ -1294,14 +1299,9 @@ io.on('connection', (socket) => {
       // Disconnette se questo socket era quello associato al giocatore
       if (gameState.players[pid].socketId === socketInstance.id) {
         gameState.players[pid].connected = false;
-
-        // Se siamo in LOBBY (la partita non è ancora iniziata),
-        // chiudere la pagina significa abbandonare la stanza d'attesa.
-        // Rimuoviamo il giocatore dalla lobby attiva (il suo account resta salvato nello storico 'accounts').
-        if (gameState.status === 'LOBBY') {
-          delete gameState.players[pid];
-          console.log(`👋 [Lobby] Giocatore ${pid} ha chiuso la pagina ed è uscito dalla stanza d'attesa.`);
-        }
+        // NOTA: Non eliminiamo il giocatore dalla lobby attiva!
+        // Se il giocatore fa refresh della pagina (Ctrl+F5) o perde temporaneamente il Wi-Fi,
+        // la sua registrazione e il suo posto nella lobby rimangono salvi al 100%.
       }
 
       db.save();

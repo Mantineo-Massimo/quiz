@@ -34,6 +34,16 @@ document.addEventListener('visibilitychange', async () => {
   }
 });
 
+// Recupero registrazione persistente da localStorage
+function getStoredRegistration() {
+  try {
+    const raw = localStorage.getItem('unime_quiz_registration');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Banner Riconnessione Socket
 const reconnectBanner = document.getElementById('player-reconnect-banner');
 socket.on('disconnect', () => {
@@ -43,11 +53,10 @@ socket.on('disconnect', () => {
 socket.on('connect', () => {
   if (reconnectBanner) reconnectBanner.style.display = 'none';
   // Se già iscritto, ripristina la sessione all'istante
-  if (isJoined && myPlayerId) {
-    const reg = getStoredRegistration();
-    if (reg) {
-      socket.emit('player:join', { ...reg, playerId: myPlayerId });
-    }
+  const reg = getStoredRegistration();
+  if (reg && myPlayerId) {
+    isJoined = true;
+    socket.emit('player:join', { ...reg, playerId: myPlayerId });
   }
 });
 
@@ -423,6 +432,21 @@ function loadSavedRegistration() {
 
 // Inizializza subito i dropdown
 loadSavedRegistration();
+
+// Se l'utente si era già registrato in passato, ripristina subito lo stato iscritto (evita di rivedere il form su Ctrl+F5)
+const initialSavedReg = getStoredRegistration();
+if (initialSavedReg && (initialSavedReg.nickname || initialSavedReg.firstName)) {
+  isJoined = true;
+  showView('waiting');
+  const lcdDisplay = document.getElementById('lcd-display');
+  if (lcdDisplay) {
+    lcdDisplay.style.display = 'flex';
+    const nickEl = document.getElementById('lcd-nickname');
+    const avEl = document.getElementById('lcd-avatar');
+    if (nickEl) nickEl.textContent = initialSavedReg.nickname || 'Matricola';
+    if (avEl) avEl.textContent = initialSavedReg.avatar || '🎓';
+  }
+}
 
 // Funzione di Registrazione/Riconnessione robusta della pulsantiera
 function syncPlayerWithServer() {

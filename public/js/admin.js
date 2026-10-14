@@ -926,7 +926,9 @@ socket.on('admin:accountsUpdated', (accounts) => {
 // Caricamento iniziale account via REST API
 async function loadInitialAccounts() {
   try {
-    const res = await fetch('/api/accounts');
+    const token = sessionStorage.getItem('unime_admin_token') || '';
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await fetch('/api/accounts', { headers });
     if (res.ok) {
       allHistoricalAccounts = await res.json();
       renderAdminAccounts();
