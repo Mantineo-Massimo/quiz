@@ -150,10 +150,64 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Helper per inviare la lista dei giocatori SOLO attualmente connessi (lobby & regia)
+// API Partecipanti & Export CSV Registrazioni
+app.get('/api/players', (req, res) => {
+  res.json(Object.values(gameState.players));
+});
+
+app.get('/api/players/export-csv', (req, res) => {
+  const players = Object.values(gameState.players);
+  
+  const headers = [
+    'ID', 'Nome', 'Cognome', 'Nickname Gioco', 'Telefono', 'Email',
+    'Stato', 'Regione', 'Provincia', 'Città',
+    'Iscritto UniMe', 'Matricola', 'Dipartimento', 'Corso di Laurea', 'Anno di Corso',
+    'Punteggio Quiz', 'Streak Max', 'Connesso', 'Avatar', 'Data Registrazione'
+  ];
+
+  function escapeCsv(val) {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  }
+
+  const rows = players.map(p => [
+    escapeCsv(p.id),
+    escapeCsv(p.firstName || ''),
+    escapeCsv(p.lastName || ''),
+    escapeCsv(p.nickname || ''),
+    escapeCsv(p.phone || ''),
+    escapeCsv(p.email || ''),
+    escapeCsv(p.country || 'Italia'),
+    escapeCsv(p.region || ''),
+    escapeCsv(p.province || ''),
+    escapeCsv(p.city || ''),
+    escapeCsv(p.isUnime ? 'SÌ' : 'NO'),
+    escapeCsv(p.matricola || ''),
+    escapeCsv(p.department || ''),
+    escapeCsv(p.course || ''),
+    escapeCsv(p.academicYear || ''),
+    escapeCsv(p.score || 0),
+    escapeCsv(p.streak || 0),
+    escapeCsv(p.connected ? 'SÌ' : 'NO'),
+    escapeCsv(p.avatar || ''),
+    escapeCsv(p.registeredAt || '')
+  ].join(','));
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const filename = `partecipanti_unime_level_up_${new Date().toISOString().slice(0, 10)}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(csvContent);
+});
+
+// Helper per inviare la lista dei giocatori (Lobby maxischermo & Regia completa)
 function emitPlayersUpdated() {
-  const activePlayers = Object.values(gameState.players).filter(p => p.connected);
+  const allPlayers = Object.values(gameState.players);
+  const activePlayers = allPlayers.filter(p => p.connected);
   io.emit('host:playersUpdated', activePlayers);
+  io.emit('admin:playersUpdated', allPlayers);
 }
 
 // Helper: invia syncState completo a un socket o a tutti
@@ -399,24 +453,45 @@ io.on('connection', (socket) => {
   // Sync completo immediato a chiunque si colleghi (Host, Admin, Player ricaricati)
   sendSyncState(socket);
   socket.emit('host:playersUpdated', Object.values(gameState.players).filter(p => p.connected));
+  socket.emit('admin:playersUpdated', Object.values(gameState.players));
 
   // Giocatore si registra o si riconnette
-  socket.on('player:join', ({ nickname, avatar, playerId }) => {
-    const cleanNick = (nickname || 'Matricola').trim().slice(0, 16);
+  socket.on('player:join', (data = {}) => {
+    const {
+      nickname, avatar, playerId,
+      firstName, lastName, phone, email,
+      country, region, province, city,
+      isUnime, matricola, department, course, academicYear
+    } = data;
+
+    const fallbackNick = `${firstName || ''} ${lastName || ''}`.trim() || 'Matricola';
+    const cleanNick = (nickname || fallbackNick).trim().slice(0, 16);
     let pid = playerId || `p_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
     // Cerca se esiste già per playerId
     let player = gameState.players[pid];
 
-    // Se non trovato per ID, cerca se esiste già registrato con lo stesso nickname (recupero sessione post-chiusura)
-    if (!player && cleanNick) {
-      const existing = Object.values(gameState.players).find(
-        p => p.nickname.toLowerCase() === cleanNick.toLowerCase()
-      );
-      if (existing) {
-        player = existing;
-        pid = existing.id;
-        console.log(`🔄 Sessione recuperata via nickname: '${cleanNick}' -> ID: ${pid}`);
+    // Se non trovato per ID, cerca se esiste già registrato con email o nickname (recupero sessione)
+    if (!player) {
+      if (email) {
+        const byEmail = Object.values(gameState.players).find(
+          p => p.email && p.email.toLowerCase() === email.toLowerCase().trim()
+        );
+        if (byEmail) {
+          player = byEmail;
+          pid = byEmail.id;
+          console.log(`🔄 Sessione recuperata via email: '${email}' -> ID: ${pid}`);
+        }
+      }
+      if (!player && cleanNick) {
+        const existing = Object.values(gameState.players).find(
+          p => p.nickname.toLowerCase() === cleanNick.toLowerCase()
+        );
+        if (existing) {
+          player = existing;
+          pid = existing.id;
+          console.log(`🔄 Sessione recuperata via nickname: '${cleanNick}' -> ID: ${pid}`);
+        }
       }
     }
 
@@ -426,18 +501,28 @@ io.on('connection', (socket) => {
     const isGameInProgress = gameState.status !== 'LOBBY';
 
     if (player) {
-      // Giocatore già nel DB: riconnessione di giocatore esistente!
+      // Giocatore già nel DB: riconnessione o aggiornamento dati
       player.socketId = socket.id;
       player.connected = true;
 
       // Il nome squadra si può cambiare SOLO se la partita non è iniziata o se il giocatore è in sala d'attesa!
       const canChangeName = (gameState.status === 'LOBBY' || player.waitingRoom);
-      if (nickname && canChangeName) {
-        player.nickname = cleanNick;
-      }
-      if (avatar && canChangeName) {
-        player.avatar = avatar;
-      }
+      if (nickname && canChangeName) player.nickname = cleanNick;
+      if (avatar && canChangeName) player.avatar = avatar;
+
+      if (firstName) player.firstName = firstName.trim();
+      if (lastName) player.lastName = lastName.trim();
+      if (phone) player.phone = phone.trim();
+      if (email) player.email = email.trim();
+      if (country) player.country = country.trim();
+      if (region) player.region = region.trim();
+      if (province) player.province = province.trim();
+      if (city) player.city = city.trim();
+      if (isUnime !== undefined) player.isUnime = !!isUnime;
+      if (matricola !== undefined) player.matricola = matricola.trim();
+      if (department !== undefined) player.department = department.trim();
+      if (course !== undefined) player.course = course.trim();
+      if (academicYear !== undefined) player.academicYear = academicYear.trim();
     } else {
       // Nuovo partecipante! Se la partita è già iniziata, mettilo in sala d'attesa fino alla prossima domanda
       const isWaiting = isGameInProgress;
@@ -446,6 +531,20 @@ io.on('connection', (socket) => {
         socketId: socket.id,
         nickname: cleanNick,
         avatar: avatar || '🎓',
+        firstName: (firstName || '').trim(),
+        lastName: (lastName || '').trim(),
+        phone: (phone || '').trim(),
+        email: (email || '').trim(),
+        country: (country || 'Italia').trim(),
+        region: (region || '').trim(),
+        province: (province || '').trim(),
+        city: (city || '').trim(),
+        isUnime: (isUnime !== undefined) ? !!isUnime : true,
+        matricola: (matricola || '').trim(),
+        department: (department || '').trim(),
+        course: (course || '').trim(),
+        academicYear: (academicYear || '').trim(),
+        registeredAt: new Date().toISOString(),
         score: 0,
         streak: 0,
         connected: true,
@@ -455,7 +554,7 @@ io.on('connection', (socket) => {
         lastPointsEarned: 0
       };
       gameState.players[pid] = player;
-      console.log(`👤 Nuovo giocatore ${cleanNick} (${pid}) - ${isWaiting ? 'IN SALA D\'ATTESA (partita in corso)' : 'IN LOBBY'}`);
+      console.log(`👤 Nuovo giocatore registrato: ${cleanNick} (${player.firstName} ${player.lastName} - ${player.isUnime ? 'UniMe ' + player.department : 'Esterno'}) [${pid}]`);
     }
 
     db.save(); // PERSISTE SUBITO SU DISCO

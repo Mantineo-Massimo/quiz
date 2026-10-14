@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <!-- 1. VIEW JOIN -->
+    <!-- 1. VIEW JOIN & REGISTRAZIONE -->
     <main id="view-join" class="player-view active">
       <div class="join-header">
         <div class="join-logos-badge">
@@ -57,30 +57,154 @@
         </p>
       </div>
 
-      <div class="join-card">
-        <div class="form-group">
-          <label>1. Il tuo Avatar / Squadra</label>
-          <div id="avatar-list" class="avatar-selector">
-            <button class="avatar-btn selected" data-avatar="🎓">🎓</button>
-            <button class="avatar-btn" data-avatar="🦁">🦁</button>
-            <button class="avatar-btn" data-avatar="🦉">🦉</button>
-            <button class="avatar-btn" data-avatar="🦊">🦊</button>
-            <button class="avatar-btn" data-avatar="⚡">⚡</button>
-            <button class="avatar-btn" data-avatar="🚀">🚀</button>
-            <button class="avatar-btn" data-avatar="🍕">🍕</button>
-            <button class="avatar-btn" data-avatar="🌊">🌊</button>
+      <form id="form-registration" class="join-card" onsubmit="return false;">
+        
+        <!-- SEZIONE 1: DATI PERSONALI -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <span>👤</span> 1. Dati Personali
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="input-firstname">Nome <span class="req">*</span></label>
+              <input type="text" id="input-firstname" class="form-input" placeholder="Es. Mario" autocomplete="given-name" required>
+            </div>
+            <div class="form-field">
+              <label for="input-lastname">Cognome <span class="req">*</span></label>
+              <input type="text" id="input-lastname" class="form-input" placeholder="Es. Rossi" autocomplete="family-name" required>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="input-phone">Telefono / WhatsApp <span class="req">*</span></label>
+              <input type="tel" id="input-phone" class="form-input" placeholder="Es. 333 1234567" autocomplete="tel" required>
+            </div>
+            <div class="form-field">
+              <label for="input-email">Email <span class="req">*</span></label>
+              <input type="email" id="input-email" class="form-input" placeholder="Es. mario.rossi@email.it" autocomplete="email" required>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="input-nickname">2. Nome Squadra / Nickname</label>
-          <input type="text" id="input-nickname" class="input-nick" placeholder="Es. Matricola24" maxlength="15" autocomplete="off" autocorrect="off">
+        <!-- SEZIONE 2: RESIDENZA & PROVENIENZA -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <span>📍</span> 2. Provenienza &amp; Residenza
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="input-country">Stato <span class="req">*</span></label>
+              <input type="text" id="input-country" class="form-input" value="Italia" placeholder="Italia" required>
+            </div>
+            <div class="form-field">
+              <label for="select-region">Regione <span class="req">*</span></label>
+              <select id="select-region" class="form-select" required>
+                <!-- Popolato da JS -->
+              </select>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="input-province">Provincia <span class="req">*</span></label>
+              <input type="text" id="input-province" class="form-input" placeholder="Es. Messina (ME)" required>
+            </div>
+            <div class="form-field">
+              <label for="input-city">Città <span class="req">*</span></label>
+              <input type="text" id="input-city" class="form-input" placeholder="Es. Messina" required>
+            </div>
+          </div>
         </div>
 
-        <button id="btn-join" class="btn btn-primary" style="padding: 16px; font-size: 1.25rem;">
+        <!-- SEZIONE 3: ATENEO UNIME -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <span>🏛️</span> 3. Iscrizione Universitaria
+          </div>
+          
+          <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
+            Sei attualmente iscritto all'<strong>Università degli Studi di Messina</strong>?
+          </div>
+
+          <div class="unime-toggle-pills">
+            <button type="button" id="btn-unime-yes" class="unime-toggle-btn active">
+              <span>🎓 SÌ, Studente UniMe</span>
+              <span class="pill-sub">Matricola o iscritto UniMe</span>
+            </button>
+            <button type="button" id="btn-unime-no" class="unime-toggle-btn">
+              <span>🌍 NO, Esterno</span>
+              <span class="pill-sub">Futuro studente o ospite</span>
+            </button>
+          </div>
+
+          <!-- Campi visualizzati solo se Studente UniMe -->
+          <div id="unime-conditional-fields" class="unime-conditional-fields">
+            <div class="form-field">
+              <label for="input-matricola">Numero di Matricola <span class="req">*</span></label>
+              <input type="text" id="input-matricola" class="form-input" placeholder="Es. 543210 (o 'Matricola' se in attesa)" maxlength="16">
+            </div>
+
+            <div class="form-field">
+              <label for="select-department">Dipartimento <span class="req">*</span></label>
+              <select id="select-department" class="form-select">
+                <option value="">-- Seleziona Dipartimento --</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="select-course">Corso di Laurea (CdL) <span class="req">*</span></label>
+              <select id="select-course" class="form-select" disabled>
+                <option value="">-- Seleziona prima il Dipartimento --</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="select-year">Anno di Corso <span class="req">*</span></label>
+              <select id="select-year" class="form-select" disabled>
+                <option value="">-- Seleziona prima il Corso di Laurea --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEZIONE 4: PULSANTIERA DI GIOCO -->
+        <div class="form-section">
+          <div class="form-section-title">
+            <span>⚡</span> 4. Personalizza la tua Pulsantiera
+          </div>
+
+          <div class="form-field">
+            <label>Scegli il tuo Avatar</label>
+            <div id="avatar-list" class="avatar-selector">
+              <button type="button" class="avatar-btn selected" data-avatar="🎓">🎓</button>
+              <button type="button" class="avatar-btn" data-avatar="🦁">🦁</button>
+              <button type="button" class="avatar-btn" data-avatar="🦉">🦉</button>
+              <button type="button" class="avatar-btn" data-avatar="🦊">🦊</button>
+              <button type="button" class="avatar-btn" data-avatar="⚡">⚡</button>
+              <button type="button" class="avatar-btn" data-avatar="🚀">🚀</button>
+              <button type="button" class="avatar-btn" data-avatar="🍕">🍕</button>
+              <button type="button" class="avatar-btn" data-avatar="🌊">🌊</button>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="input-nickname">Nome Squadra / Nickname Maxischermo</label>
+            <input type="text" id="input-nickname" class="form-input input-nick" placeholder="Es. Mario Rossi o I Fenici" maxlength="16" autocomplete="off">
+            <small style="color: #94a3b8; font-size: 0.76rem; margin-top: 4px;">
+              💡 Nome che apparirà sul maxischermo durante il quiz. Se vuoto, useremo il tuo Nome.
+            </small>
+          </div>
+        </div>
+
+        <!-- BOX MESSAGGI ERRORE -->
+        <div id="join-error-box" class="join-error-box" style="display: none;">
+          <span style="font-size: 1.2rem;">⚠️</span>
+          <span id="join-error-text">Compila tutti i campi obbligatori contrassegnati da *</span>
+        </div>
+
+        <button type="button" id="btn-join" class="btn btn-primary btn-join-giant">
           COLLEGA PULSANTIERA ⚡
         </button>
-      </div>
+      </form>
     </main>
 
     <!-- 2. VIEW WAITING -->
@@ -93,8 +217,20 @@
         <p class="waiting-sub">
           Guarda il maxischermo: la prossima domanda sta per partire...
         </p>
-        <button id="btn-edit-team" class="btn btn-glass" style="margin-top: 18px; font-size: 0.85rem; padding: 8px 18px;">
-          ✏️ Cambia Nome Squadra
+
+        <!-- Riepilogo Profilo Partecipante -->
+        <div id="player-profile-summary" class="profile-summary-card">
+          <div class="profile-summary-header">
+            <span>📋 Profilo Partecipante</span>
+            <span id="summary-badge" style="font-size: 0.72rem; color: #10b981; font-weight: 700;">REGISTRATO</span>
+          </div>
+          <div id="summary-name" style="font-weight: 700; color: #fff;">-</div>
+          <div id="summary-unime-info" style="font-size: 0.82rem; color: var(--accent-gold);">-</div>
+          <div id="summary-geo-info" style="font-size: 0.78rem; color: #94a3b8;">-</div>
+        </div>
+
+        <button id="btn-edit-team" class="btn btn-glass" style="margin-top: 18px; font-size: 0.85rem; padding: 10px 20px;">
+          ✏️ Modifica Dati Profilo
         </button>
       </div>
     </main>
@@ -218,6 +354,7 @@
     </div>
   </div>
 
+  <script src="/js/departmentsData.js"></script>
   <script src="/js/audio.js"></script>
   <script src="/js/player.js"></script>
 </body>

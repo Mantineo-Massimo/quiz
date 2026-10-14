@@ -344,44 +344,185 @@ if (btnClearAllPlayers) {
   });
 }
 
-// Players management
+// Players management & Anagrafica Partecipanti
 const adminPlayersList = document.getElementById('admin-players-list');
 const adminPlayerCount = document.getElementById('admin-player-count');
+const statTotalPlayers = document.getElementById('stat-total-players');
+const statConnectedPlayers = document.getElementById('stat-connected-players');
+const statUnimePlayers = document.getElementById('stat-unime-players');
+const statExternalPlayers = document.getElementById('stat-external-players');
+const playerSearchInput = document.getElementById('admin-player-search');
+const filterButtons = document.querySelectorAll('.admin-filter-btn');
 
-socket.on('host:playersUpdated', (players) => {
-  adminPlayerCount.textContent = players.length;
-  adminPlayersList.innerHTML = '';
+let allAdminPlayers = [];
+let currentFilter = 'all';
+let searchQuery = '';
 
-  if (players.length === 0) {
-    adminPlayersList.innerHTML = '<div style="color: rgba(255,255,255,0.6); padding: 10px;">Nessun giocatore connesso al momento.</div>';
-    return;
-  }
+if (playerSearchInput) {
+  playerSearchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.toLowerCase().trim();
+    renderAdminPlayers();
+  });
+}
 
-  players.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'player-admin-row';
-    const statusBadge = p.waitingRoom 
-      ? '<span style="font-size: 0.75rem; background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 2px 6px; margin-left: 6px;">⏳ In Attesa</span>'
-      : '<span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 6px; padding: 2px 6px; margin-left: 6px;">⚡ In Gara</span>';
-    row.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 1.6rem;">${p.avatar}</span>
-        <div>
-          <strong style="font-size: 1.1rem; color: #fff;">${p.nickname}</strong>
-          ${statusBadge}
-          <span style="font-size: 0.85rem; color: var(--unime-gold); margin-left: 8px;">(${p.score} pt)</span>
-        </div>
-      </div>
-      <button class="btn btn-glass" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4); padding: 6px 12px; font-size: 0.85rem;" onclick="kickPlayer('${p.id}')">
-        ❌ Espelli
-      </button>
-    `;
-    adminPlayersList.appendChild(row);
+filterButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.getAttribute('data-filter') || 'all';
+    renderAdminPlayers();
   });
 });
 
+function updatePlayerStats() {
+  const total = allAdminPlayers.length;
+  const connected = allAdminPlayers.filter(p => p.connected).length;
+  const unime = allAdminPlayers.filter(p => p.isUnime).length;
+  const external = total - unime;
+
+  if (adminPlayerCount) adminPlayerCount.textContent = connected;
+  if (statTotalPlayers) statTotalPlayers.textContent = total;
+  if (statConnectedPlayers) statConnectedPlayers.textContent = connected;
+  if (statUnimePlayers) statUnimePlayers.textContent = unime;
+  if (statExternalPlayers) statExternalPlayers.textContent = external;
+}
+
+function renderAdminPlayers() {
+  if (!adminPlayersList) return;
+  adminPlayersList.innerHTML = '';
+
+  updatePlayerStats();
+
+  // Applica filtri
+  let filtered = allAdminPlayers.filter(p => {
+    if (currentFilter === 'unime' && !p.isUnime) return false;
+    if (currentFilter === 'external' && p.isUnime) return false;
+
+    if (searchQuery) {
+      const matchText = [
+        p.nickname || '',
+        p.firstName || '',
+        p.lastName || '',
+        p.email || '',
+        p.phone || '',
+        p.matricola || '',
+        p.department || '',
+        p.course || '',
+        p.city || '',
+        p.province || ''
+      ].join(' ').toLowerCase();
+
+      if (!matchText.includes(searchQuery)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    adminPlayersList.innerHTML = `
+      <div style="color: rgba(255,255,255,0.6); padding: 24px; text-align: center; background: rgba(0,0,0,0.25); border-radius: 14px;">
+        ${allAdminPlayers.length === 0 ? 'Nessun partecipante registrato al momento.' : 'Nessun partecipante corrisponde ai filtri di ricerca.'}
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'player-admin-card';
+
+    // Status Badge
+    let statusBadge = '';
+    if (!p.connected) {
+      statusBadge = '<span style="font-size: 0.72rem; background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.4); border-radius: 6px; padding: 2px 6px;">⚪ Offline</span>';
+    } else if (p.waitingRoom) {
+      statusBadge = '<span style="font-size: 0.72rem; background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 6px; padding: 2px 6px;">⏳ In Attesa</span>';
+    } else {
+      statusBadge = '<span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 6px; padding: 2px 6px;">⚡ In Gara</span>';
+    }
+
+    // Badge UniMe / Esterno
+    let unimeBadge = '';
+    if (p.isUnime) {
+      const shortDept = window.getDepartmentShortName ? window.getDepartmentShortName(p.department) : (p.department || 'UniMe');
+      unimeBadge = `
+        <span class="badge-unime-pill">
+          🎓 ${shortDept} • ${p.course || 'CdL'} (${p.academicYear || 'Anno'}) • Matr. ${p.matricola || 'N/D'}
+        </span>
+      `;
+    } else {
+      unimeBadge = '<span class="badge-external-pill">🌍 Partecipante Esterno</span>';
+    }
+
+    const realName = (p.firstName || p.lastName) ? `${p.firstName || ''} ${p.lastName || ''}`.trim() : '';
+
+    card.innerHTML = `
+      <div class="player-admin-card-top">
+        <div class="player-admin-info-main">
+          <span style="font-size: 2rem;">${p.avatar || '🎓'}</span>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="font-size: 1.15rem; color: #fff;">${p.nickname}</strong>
+              ${realName ? `<span style="color: #cbd5e1; font-size: 0.9rem;">(${realName})</span>` : ''}
+              ${statusBadge}
+              <span style="font-size: 0.85rem; color: var(--unime-gold); font-weight: 800; margin-left: 4px;">🏆 ${p.score || 0} pt</span>
+            </div>
+            <div style="margin-top: 4px;">
+              ${unimeBadge}
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-glass" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4); padding: 6px 12px; font-size: 0.82rem;" onclick="kickPlayer('${p.id}')">
+          ❌ Espelli
+        </button>
+      </div>
+
+      <div class="player-admin-meta">
+        <div>
+          <strong>📞 Telefono:</strong> ${p.phone ? `<a href="tel:${p.phone}">${p.phone}</a>` : 'Non indicato'}
+        </div>
+        <div>
+          <strong>✉️ Email:</strong> ${p.email ? `<a href="mailto:${p.email}">${p.email}</a>` : 'Non indicata'}
+        </div>
+        <div>
+          <strong>📍 Residenza:</strong> ${p.city || ''} ${p.province ? `(${p.province})` : ''}, ${p.region || ''} (${p.country || 'Italia'})
+        </div>
+        <div>
+          <strong>🔥 Serie Corrette:</strong> ${p.streak || 0} consecutivi
+        </div>
+      </div>
+    `;
+
+    adminPlayersList.appendChild(card);
+  });
+}
+
+socket.on('admin:playersUpdated', (players) => {
+  allAdminPlayers = players || [];
+  renderAdminPlayers();
+});
+
+socket.on('host:playersUpdated', (activePlayers) => {
+  if (allAdminPlayers.length === 0) {
+    allAdminPlayers = activePlayers || [];
+  } else {
+    // Sincronizza stato di connessione
+    const activeMap = new Set(activePlayers.map(p => p.id));
+    allAdminPlayers.forEach(p => {
+      p.connected = activeMap.has(p.id);
+      const activeObj = activePlayers.find(a => a.id === p.id);
+      if (activeObj) {
+        p.score = activeObj.score;
+        p.streak = activeObj.streak;
+        p.waitingRoom = activeObj.waitingRoom;
+      }
+    });
+  }
+  renderAdminPlayers();
+});
+
 window.kickPlayer = function(playerId) {
-  if (confirm('Espellere questo giocatore?')) {
+  if (confirm('Espellere questo partecipante dal quiz?')) {
     socket.emit('admin:kickPlayer', { playerId });
   }
 };

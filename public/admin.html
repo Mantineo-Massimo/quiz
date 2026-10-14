@@ -146,9 +146,47 @@
 
     </div>
 
-    <!-- TAB 2: GIOCATORI CONNESSI -->
+    <!-- TAB 2: GIOCATORI CONNESSI & ANAGRAFICA -->
     <div id="tab-players" class="admin-panel">
-      <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Gestione Partecipanti in Tempo Reale</h2>
+      <!-- Metriche Registrazioni -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <div style="background: rgba(16, 24, 43, 0.85); border: 1px solid var(--border-glass); border-radius: 14px; padding: 14px 18px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Totale Registrati</div>
+          <div id="stat-total-players" style="font-size: 1.8rem; font-weight: 900; color: #fff;">0</div>
+        </div>
+        <div style="background: rgba(16, 24, 43, 0.85); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 14px 18px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: #34d399; font-weight: 700;">Attivi Connessi Ora</div>
+          <div id="stat-connected-players" style="font-size: 1.8rem; font-weight: 900; color: #10b981;">0</div>
+        </div>
+        <div style="background: rgba(16, 24, 43, 0.85); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 14px; padding: 14px 18px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent-gold); font-weight: 700;">Studenti UniMe</div>
+          <div id="stat-unime-players" style="font-size: 1.8rem; font-weight: 900; color: var(--accent-gold);">0</div>
+        </div>
+        <div style="background: rgba(16, 24, 43, 0.85); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 14px 18px;">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: #93c5fd; font-weight: 700;">Partecipanti Esterni</div>
+          <div id="stat-external-players" style="font-size: 1.8rem; font-weight: 900; color: #60a5fa;">0</div>
+        </div>
+      </div>
+
+      <!-- Barra Azioni & Filtri -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 480px;">
+          <input type="text" id="admin-player-search" class="form-input" placeholder="🔍 Cerca nome, matricola, dipartimento, cdl, cell..." style="background: rgba(0,0,0,0.4); border-color: var(--border-glass); font-size: 0.9rem; padding: 10px 14px;">
+        </div>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <div class="admin-filter-pills" style="display: flex; gap: 6px;">
+            <button type="button" class="admin-filter-btn active" data-filter="all">Tutti</button>
+            <button type="button" class="admin-filter-btn" data-filter="unime">🎓 UniMe</button>
+            <button type="button" class="admin-filter-btn" data-filter="external">🌍 Esterni</button>
+          </div>
+
+          <a href="/api/players/export-csv" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 10px 18px; font-size: 0.9rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+            📥 Esporta Elenco (CSV / Excel)
+          </a>
+        </div>
+      </div>
+
       <div id="admin-players-list" class="player-admin-list">
         <!-- Generato via JS -->
       </div>
@@ -211,6 +249,7 @@
     </div>
   </div>
 
+  <script src="/js/departmentsData.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

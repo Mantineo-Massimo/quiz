@@ -181,21 +181,236 @@ body {
   background: var(--brand-card);
   border: 1px solid var(--brand-card-border);
   border-radius: 24px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--shadow-arcade);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-.form-group label {
-  display: block;
-  font-size: 0.95rem;
+/* Sezioni Form Modulari */
+.form-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
   font-weight: 800;
-  color: #e2e8f0;
-  margin-bottom: 10px;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #cbd5e1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.form-field .req {
+  color: #ef4444;
+  font-weight: 900;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(13, 20, 36, 0.85);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent-gold);
+  background: rgba(13, 20, 36, 0.98);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+}
+
+.form-input.invalid, .form-select.invalid {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 15px;
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.form-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.form-select option {
+  background: #0d1424;
+  color: #fff;
+  padding: 8px;
+}
+
+/* Toggle Pills Studente UniMe */
+.unime-toggle-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.unime-toggle-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 12px 10px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.unime-toggle-btn.active {
+  background: rgba(193, 41, 47, 0.25);
+  border-color: var(--morgana-red);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(193, 41, 47, 0.4);
+}
+
+.unime-toggle-btn .pill-sub {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.unime-toggle-btn.active .pill-sub {
+  color: #fca5a5;
+}
+
+.unime-conditional-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  animation: fadeInDown 0.25s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Box Errore */
+.join-error-box {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1.5px solid #ef4444;
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: #fca5a5;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.btn-join-giant {
+  padding: 16px;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 20px rgba(193, 41, 47, 0.5);
+  margin-top: 6px;
+}
+
+/* Profile Summary in Waiting Room */
+.profile-summary-card {
+  background: rgba(16, 24, 43, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-top: 16px;
+  text-align: left;
+  font-size: 0.88rem;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+}
+
+.profile-summary-header {
+  font-weight: 800;
+  color: var(--accent-gold);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .avatar-selector {
@@ -211,8 +426,8 @@ body {
 }
 
 .avatar-btn {
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   border-radius: 16px;
   border: 2px solid var(--brand-card-border);
@@ -234,16 +449,17 @@ body {
 
 .input-nick {
   width: 100%;
-  padding: 16px 20px;
-  border-radius: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
   border: 2px solid var(--brand-card-border);
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   font-family: var(--font-display);
   outline: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .input-nick:focus {

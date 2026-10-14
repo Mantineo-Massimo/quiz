@@ -134,6 +134,7 @@ window.addEventListener('click', onFirstUserInteraction, { passive: true });
 let selectedAvatar = '🎓';
 let playerNickname = '';
 let isJoined = false;
+let isUnime = true; // Default: studente UniMe
 
 // Persistent player ID generato una sola volta per dispositivo
 let myPlayerId = '';
@@ -147,6 +148,32 @@ try {
   myPlayerId = 'p_' + Date.now();
 }
 
+// Elementi Form Registrazione
+const inputFirstname = document.getElementById('input-firstname');
+const inputLastname = document.getElementById('input-lastname');
+const inputPhone = document.getElementById('input-phone');
+const inputEmail = document.getElementById('input-email');
+const inputCountry = document.getElementById('input-country');
+const selectRegion = document.getElementById('select-region');
+const inputProvince = document.getElementById('input-province');
+const inputCity = document.getElementById('input-city');
+const btnUnimeYes = document.getElementById('btn-unime-yes');
+const btnUnimeNo = document.getElementById('btn-unime-no');
+const unimeConditionalFields = document.getElementById('unime-conditional-fields');
+const inputMatricola = document.getElementById('input-matricola');
+const selectDepartment = document.getElementById('select-department');
+const selectCourse = document.getElementById('select-course');
+const selectYear = document.getElementById('select-year');
+const inputNick = document.getElementById('input-nickname');
+const joinErrorBox = document.getElementById('join-error-box');
+const joinErrorText = document.getElementById('join-error-text');
+
+// Riepilogo Profilo in Sala d'Attesa
+const summaryName = document.getElementById('summary-name');
+const summaryUnimeInfo = document.getElementById('summary-unime-info');
+const summaryGeoInfo = document.getElementById('summary-geo-info');
+const summaryBadge = document.getElementById('summary-badge');
+
 // Avatar Selector
 const avatarBtns = document.querySelectorAll('.avatar-btn');
 avatarBtns.forEach(btn => {
@@ -159,39 +186,222 @@ avatarBtns.forEach(btn => {
   });
 });
 
-// Restore saved nickname if present
-try {
-  const savedNick = localStorage.getItem('unime_quiz_nick');
-  const savedAvatar = localStorage.getItem('unime_quiz_avatar');
-  if (savedNick) {
-    document.getElementById('input-nickname').value = savedNick;
-    playerNickname = savedNick;
+// Inizializza Regioni Italiane nel dropdown
+function initRegionSelect() {
+  if (!selectRegion) return;
+  selectRegion.innerHTML = '';
+  const regions = window.italianRegions || [
+    "Sicilia", "Calabria", "Lazio", "Lombardia", "Campania", "Puglia",
+    "Piemonte", "Veneto", "Emilia-Romagna", "Toscana", "Sardegna", "Liguria",
+    "Marche", "Abruzzo", "Friuli-Venezia Giulia", "Trentino-Alto Adige",
+    "Umbria", "Basilicata", "Molise", "Valle d'Aosta", "Altro / Estero"
+  ];
+  regions.forEach(reg => {
+    const opt = document.createElement('option');
+    opt.value = reg;
+    opt.textContent = reg;
+    if (reg === 'Sicilia') opt.selected = true;
+    selectRegion.appendChild(opt);
+  });
+}
+
+// Inizializza Dipartimenti UniMe
+function initDepartmentSelect() {
+  if (!selectDepartment) return;
+  selectDepartment.innerHTML = '<option value="">-- Seleziona Dipartimento --</option>';
+  const depts = window.departmentsData ? Object.keys(window.departmentsData) : [];
+  depts.forEach(dept => {
+    const opt = document.createElement('option');
+    opt.value = dept;
+    opt.textContent = dept;
+    selectDepartment.appendChild(opt);
+  });
+}
+
+// Listener Selezione Dipartimento -> Popola Corsi di Laurea
+if (selectDepartment) {
+  selectDepartment.addEventListener('change', () => {
+    const dept = selectDepartment.value;
+    selectCourse.innerHTML = '<option value="">-- Seleziona Corso di Laurea --</option>';
+    selectYear.innerHTML = '<option value="">-- Prima seleziona il Corso di Laurea --</option>';
+    selectYear.disabled = true;
+
+    if (dept && window.departmentsData && window.departmentsData[dept]) {
+      const courses = window.departmentsData[dept];
+      courses.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        selectCourse.appendChild(opt);
+      });
+      selectCourse.disabled = false;
+    } else {
+      selectCourse.disabled = true;
+    }
+  });
+}
+
+// Listener Selezione Corso di Laurea -> Popola Anni Dinamici
+if (selectCourse) {
+  selectCourse.addEventListener('change', () => {
+    const course = selectCourse.value;
+    selectYear.innerHTML = '<option value="">-- Seleziona Anno di Corso --</option>';
+
+    if (course) {
+      const years = window.getCourseYears ? window.getCourseYears(course) : ['1° Anno', '2° Anno', '3° Anno', 'Fuori Corso'];
+      years.forEach(yr => {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = yr;
+        selectYear.appendChild(opt);
+      });
+      selectYear.disabled = false;
+    } else {
+      selectYear.disabled = true;
+    }
+  });
+}
+
+// Toggle Studente UniMe SÌ / NO
+if (btnUnimeYes && btnUnimeNo) {
+  btnUnimeYes.addEventListener('click', () => {
+    isUnime = true;
+    btnUnimeYes.classList.add('active');
+    btnUnimeNo.classList.remove('active');
+    if (unimeConditionalFields) unimeConditionalFields.style.display = 'flex';
+  });
+
+  btnUnimeNo.addEventListener('click', () => {
+    isUnime = false;
+    btnUnimeNo.classList.add('active');
+    btnUnimeYes.classList.remove('active');
+    if (unimeConditionalFields) unimeConditionalFields.style.display = 'none';
+  });
+}
+
+// Aggiorna card riepilogo in Sala d'Attesa
+function updateProfileSummaryCard(profile) {
+  if (!profile) return;
+  if (summaryName) {
+    const displayName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.nickname || 'Matricola';
+    summaryName.textContent = `${profile.avatar || '🎓'} ${displayName} (${profile.nickname || 'Squadra'})`;
   }
-  if (savedAvatar) {
-    selectedAvatar = savedAvatar;
-    avatarBtns.forEach(b => {
-      b.classList.toggle('selected', b.getAttribute('data-avatar') === savedAvatar);
-    });
+  if (summaryUnimeInfo) {
+    if (profile.isUnime) {
+      const shortDept = window.getDepartmentShortName ? window.getDepartmentShortName(profile.department) : (profile.department || '');
+      summaryUnimeInfo.textContent = `🏛️ UniMe: ${shortDept} • ${profile.course || ''} (${profile.academicYear || ''}) • Matr. ${profile.matricola || 'N/D'}`;
+    } else {
+      summaryUnimeInfo.textContent = `🌍 Partecipante Esterno / Futuro Studente`;
+    }
   }
-} catch (e) {}
+  if (summaryGeoInfo) {
+    const provStr = profile.province ? `(${profile.province})` : '';
+    summaryGeoInfo.textContent = `📍 ${profile.city || ''} ${provStr}, ${profile.region || ''} • 📞 ${profile.phone || ''} • ✉️ ${profile.email || ''}`;
+  }
+}
+
+// Carica e ripristina registrazione da localStorage
+function loadSavedRegistration() {
+  initRegionSelect();
+  initDepartmentSelect();
+
+  try {
+    const raw = localStorage.getItem('unime_quiz_registration');
+    if (raw) {
+      const reg = JSON.parse(raw);
+      if (inputFirstname && reg.firstName) inputFirstname.value = reg.firstName;
+      if (inputLastname && reg.lastName) inputLastname.value = reg.lastName;
+      if (inputPhone && reg.phone) inputPhone.value = reg.phone;
+      if (inputEmail && reg.email) inputEmail.value = reg.email;
+      if (inputCountry && reg.country) inputCountry.value = reg.country;
+      if (selectRegion && reg.region) selectRegion.value = reg.region;
+      if (inputProvince && reg.province) inputProvince.value = reg.province;
+      if (inputCity && reg.city) inputCity.value = reg.city;
+
+      isUnime = (reg.isUnime !== false);
+      if (btnUnimeYes && btnUnimeNo) {
+        btnUnimeYes.classList.toggle('active', isUnime);
+        btnUnimeNo.classList.toggle('active', !isUnime);
+      }
+      if (unimeConditionalFields) {
+        unimeConditionalFields.style.display = isUnime ? 'flex' : 'none';
+      }
+
+      if (inputMatricola && reg.matricola) inputMatricola.value = reg.matricola;
+      if (selectDepartment && reg.department) {
+        selectDepartment.value = reg.department;
+        selectDepartment.dispatchEvent(new Event('change'));
+        if (selectCourse && reg.course) {
+          selectCourse.value = reg.course;
+          selectCourse.dispatchEvent(new Event('change'));
+          if (selectYear && reg.academicYear) {
+            selectYear.value = reg.academicYear;
+          }
+        }
+      }
+
+      if (inputNick && reg.nickname) {
+        inputNick.value = reg.nickname;
+        playerNickname = reg.nickname;
+      }
+
+      if (reg.avatar) {
+        selectedAvatar = reg.avatar;
+        avatarBtns.forEach(b => {
+          b.classList.toggle('selected', b.getAttribute('data-avatar') === reg.avatar);
+        });
+      }
+
+      updateProfileSummaryCard(reg);
+    } else {
+      // Compatibilità con sessioni precedenti
+      const legacyNick = localStorage.getItem('unime_quiz_nick');
+      const legacyAvatar = localStorage.getItem('unime_quiz_avatar');
+      if (legacyNick && inputNick) inputNick.value = legacyNick;
+      if (legacyAvatar) {
+        selectedAvatar = legacyAvatar;
+        avatarBtns.forEach(b => {
+          b.classList.toggle('selected', b.getAttribute('data-avatar') === legacyAvatar);
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Errore ripristino dati utente:', e);
+  }
+}
+
+// Inizializza subito i dropdown
+loadSavedRegistration();
 
 // Funzione di Registrazione/Riconnessione robusta della pulsantiera
 function syncPlayerWithServer() {
   try {
-    const savedNick = localStorage.getItem('unime_quiz_nick') || playerNickname;
-    const savedAvatar = localStorage.getItem('unime_quiz_avatar') || selectedAvatar;
-    if (savedNick) {
-      playerNickname = savedNick;
-      selectedAvatar = savedAvatar;
-      document.getElementById('my-nick-display').textContent = `Pulsantiera: ${savedNick}`;
-      
-      socket.emit('player:join', {
-        nickname: savedNick,
-        avatar: savedAvatar,
-        playerId: myPlayerId
-      });
+    const raw = localStorage.getItem('unime_quiz_registration');
+    if (raw) {
+      const reg = JSON.parse(raw);
+      reg.playerId = myPlayerId;
+      playerNickname = reg.nickname || playerNickname;
+      selectedAvatar = reg.avatar || selectedAvatar;
+      updateProfileSummaryCard(reg);
+      document.getElementById('my-nick-display').textContent = `Pulsantiera: ${reg.nickname}`;
+      socket.emit('player:join', reg);
+    } else {
+      const savedNick = localStorage.getItem('unime_quiz_nick') || playerNickname;
+      const savedAvatar = localStorage.getItem('unime_quiz_avatar') || selectedAvatar;
+      if (savedNick) {
+        playerNickname = savedNick;
+        selectedAvatar = savedAvatar;
+        document.getElementById('my-nick-display').textContent = `Pulsantiera: ${savedNick}`;
+        socket.emit('player:join', {
+          nickname: savedNick,
+          avatar: savedAvatar,
+          playerId: myPlayerId
+        });
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('Errore durante sync con il server:', e);
+  }
 }
 
 if (socket.connected) {
@@ -200,7 +410,7 @@ if (socket.connected) {
 // Ri-sincronizza sempre su ogni connessione o riconnessione socket
 socket.on('connect', syncPlayerWithServer);
 
-// Controllo visibilità pulsante Cambio Nome Squadra:
+// Controllo visibilità pulsante Cambio Nome Squadra/Profilo:
 // SI PUÒ CAMBIARE SOLO QUANDO LA PARTITA NON È INIZIATA (LOBBY) O CHI È IN SALA D'ATTESA
 function updateEditTeamVisibility(canEdit) {
   const btn = document.getElementById('btn-edit-team');
@@ -275,40 +485,110 @@ function renderActiveQuestion(qData, hasAnswered = false, playerAnswer = undefin
   }
 }
 
-// Join Game
+// Join & Registrazione Partecipante
 const btnJoin = document.getElementById('btn-join');
-const inputNick = document.getElementById('input-nickname');
 
 btnJoin.addEventListener('click', handleJoin);
-inputNick.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') handleJoin();
-});
 
 function handleJoin() {
   requestPhoneFullscreen();
-  const nick = inputNick.value.trim();
-  if (!nick) {
-    inputNick.focus();
-    inputNick.style.borderColor = '#ef4444';
+
+  // Reset errori visivi
+  if (joinErrorBox) joinErrorBox.style.display = 'none';
+  document.querySelectorAll('.form-input, .form-select').forEach(el => el.classList.remove('invalid'));
+
+  const firstName = inputFirstname ? inputFirstname.value.trim() : '';
+  const lastName = inputLastname ? inputLastname.value.trim() : '';
+  const phone = inputPhone ? inputPhone.value.trim() : '';
+  const email = inputEmail ? inputEmail.value.trim() : '';
+  const country = inputCountry ? inputCountry.value.trim() : 'Italia';
+  const region = selectRegion ? selectRegion.value : '';
+  const province = inputProvince ? inputProvince.value.trim() : '';
+  const city = inputCity ? inputCity.value.trim() : '';
+
+  // Validazione campi obbligatori
+  const errors = [];
+  if (!firstName) { errors.push('Nome'); if (inputFirstname) inputFirstname.classList.add('invalid'); }
+  if (!lastName) { errors.push('Cognome'); if (inputLastname) inputLastname.classList.add('invalid'); }
+  if (!phone || phone.length < 6) { errors.push('Telefono valido'); if (inputPhone) inputPhone.classList.add('invalid'); }
+  if (!email || !email.includes('@') || !email.includes('.')) { errors.push('Email valida'); if (inputEmail) inputEmail.classList.add('invalid'); }
+  if (!country) { errors.push('Stato'); if (inputCountry) inputCountry.classList.add('invalid'); }
+  if (!region) { errors.push('Regione'); if (selectRegion) selectRegion.classList.add('invalid'); }
+  if (!province) { errors.push('Provincia'); if (inputProvince) inputProvince.classList.add('invalid'); }
+  if (!city) { errors.push('Città'); if (inputCity) inputCity.classList.add('invalid'); }
+
+  let matricola = '';
+  let department = '';
+  let course = '';
+  let academicYear = '';
+
+  if (isUnime) {
+    matricola = inputMatricola ? inputMatricola.value.trim() : '';
+    department = selectDepartment ? selectDepartment.value : '';
+    course = selectCourse ? selectCourse.value : '';
+    academicYear = selectYear ? selectYear.value : '';
+
+    if (!matricola) { errors.push('Matricola'); if (inputMatricola) inputMatricola.classList.add('invalid'); }
+    if (!department) { errors.push('Dipartimento'); if (selectDepartment) selectDepartment.classList.add('invalid'); }
+    if (!course) { errors.push('Corso di Laurea'); if (selectCourse) selectCourse.classList.add('invalid'); }
+    if (!academicYear) { errors.push('Anno di Corso'); if (selectYear) selectYear.classList.add('invalid'); }
+  }
+
+  if (errors.length > 0) {
+    if (joinErrorBox && joinErrorText) {
+      joinErrorText.textContent = `Compila i seguenti campi: ${errors.join(', ')}`;
+      joinErrorBox.style.display = 'flex';
+      joinErrorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     return;
   }
 
-  window.sounds.init();
-  playerNickname = nick;
+  // Nome visualizzato sul maxischermo
+  let customNick = inputNick ? inputNick.value.trim() : '';
+  if (!customNick) {
+    customNick = `${firstName} ${lastName.charAt(0)}.`.slice(0, 16);
+    if (inputNick) inputNick.value = customNick;
+  }
+  playerNickname = customNick;
+
+  const registrationData = {
+    playerId: myPlayerId,
+    nickname: customNick,
+    avatar: selectedAvatar,
+    firstName,
+    lastName,
+    phone,
+    email,
+    country,
+    region,
+    province,
+    city,
+    isUnime,
+    matricola,
+    department,
+    course,
+    academicYear
+  };
+
   try {
-    localStorage.setItem('unime_quiz_nick', nick);
+    localStorage.setItem('unime_quiz_registration', JSON.stringify(registrationData));
+    localStorage.setItem('unime_quiz_nick', customNick);
     localStorage.setItem('unime_quiz_avatar', selectedAvatar);
   } catch (e) {}
 
-  socket.emit('player:join', { nickname: nick, avatar: selectedAvatar, playerId: myPlayerId });
+  updateProfileSummaryCard(registrationData);
+  window.sounds.init();
+
+  socket.emit('player:join', registrationData);
 }
 
-// Consenti di cambiare nickname se lo desidera (permesso solo in LOBBY o SALA D'ATTESA)
+// Consenti di cambiare dati o nickname (permesso in LOBBY o SALA D'ATTESA)
 const btnEditTeam = document.getElementById('btn-edit-team');
 if (btnEditTeam) {
   btnEditTeam.addEventListener('click', () => {
     showView('join');
-    inputNick.focus();
+    if (inputFirstname) inputFirstname.focus();
   });
 }
 
