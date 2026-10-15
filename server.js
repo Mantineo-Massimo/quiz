@@ -125,10 +125,11 @@ function calculateScore(timeSpentMs, timeLimitMs, isCorrect, streak) {
   return basePoints + speedBonus + streakBonus;
 }
 
-// Genera Classifica aggiornata (SOLO giocatori connessi e attivi nel gioco)
+// Genera Classifica aggiornata: salva e mantiene tutte le squadre iscritte e ammesse
+// anche se temporaneamente disconnesse (nessuna squadra viene eliminata dalla classifica)
 function getLeaderboard() {
   const list = Object.values(gameState.players)
-    .filter(p => p.connected && !p.waitingRoom)
+    .filter(p => !p.waitingRoom)
     .map(p => ({
       id: p.id,
       nickname: p.nickname,
@@ -136,7 +137,7 @@ function getLeaderboard() {
       score: p.score || 0,
       streak: p.streak || 0,
       lastPointsEarned: p.lastPointsEarned || 0,
-      connected: true
+      connected: p.connected !== false
     }));
   list.sort((a, b) => b.score - a.score);
   return list.map((p, idx) => ({ ...p, rank: idx + 1 }));
@@ -420,9 +421,8 @@ app.get('/api/players/export-csv', requireAuthApi, (req, res) => {
 // Helper per inviare la lista dei giocatori (Lobby maxischermo & Regia completa)
 function emitPlayersUpdated() {
   const allPlayers = Object.values(gameState.players);
-  const activePlayers = allPlayers.filter(p => p.connected);
   const allAccounts = Object.values(gameState.accounts || {});
-  io.emit('host:playersUpdated', activePlayers);
+  io.emit('host:playersUpdated', allPlayers);
   io.emit('admin:playersUpdated', allPlayers);
   io.emit('admin:accountsUpdated', allAccounts);
 }
@@ -823,7 +823,7 @@ function isAuthorizedAdminSocket(socket, actionName = 'comando admin') {
 io.on('connection', (socket) => {
   // Sync completo immediato a chiunque si colleghi (Host, Admin, Player ricaricati)
   sendSyncState(socket);
-  socket.emit('host:playersUpdated', Object.values(gameState.players).filter(p => p.connected));
+  socket.emit('host:playersUpdated', Object.values(gameState.players));
   socket.emit('admin:playersUpdated', Object.values(gameState.players));
   socket.emit('admin:accountsUpdated', Object.values(gameState.accounts || {}));
 

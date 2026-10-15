@@ -444,14 +444,19 @@ function renderFinalReveal(leaderboard, finalRevealStep, totalNonPodium, isLiveE
   }
 
   const countToShow = Math.min(finalRevealStep, revealOrder.length);
-  for (let i = 0; i < countToShow; i++) {
-    const p = revealOrder[i];
+  const revealedPlayers = revealOrder.slice(0, countToShow);
+  const latestRevealedPlayer = revealOrder[finalRevealStep - 1];
+
+  // Ordina la classifica in verticale per posizione (#4, #5, #6, ...)
+  revealedPlayers.sort((a, b) => a.rank - b.rank);
+
+  let latestCardEl = null;
+  revealedPlayers.forEach(p => {
+    const isLatest = latestRevealedPlayer && (p.id === latestRevealedPlayer.id);
     const card = document.createElement('div');
-    card.className = 'final-reveal-card';
-    if (i === finalRevealStep - 1) {
-      card.classList.add('highlight');
-    }
-    const streakBadge = p.streak > 1 ? `<span class="streak-badge" style="font-size:0.85rem; padding:4px 8px;">🔥 x${p.streak}</span>` : '';
+    card.className = 'final-reveal-card' + (isLatest ? ' highlight' : '');
+
+    const streakBadge = p.streak > 1 ? `<span class="streak-badge" style="font-size:0.85rem; padding:4px 10px; margin-left: 10px;">🔥 x${p.streak}</span>` : '';
     card.innerHTML = `
       <div class="rank-badge">#${p.rank}</div>
       <div class="avatar">${p.avatar}</div>
@@ -459,7 +464,14 @@ function renderFinalReveal(leaderboard, finalRevealStep, totalNonPodium, isLiveE
       ${streakBadge}
       <div class="score">${(p.score || 0).toLocaleString()} pt</div>
     `;
-    if (grid) grid.appendChild(card);
+    grid.appendChild(card);
+    if (isLatest) {
+      latestCardEl = card;
+    }
+  });
+
+  if (latestCardEl && isLiveEvent) {
+    latestCardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   if (isLiveEvent && finalRevealStep > 0) {
