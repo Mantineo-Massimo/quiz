@@ -418,11 +418,12 @@ app.get('/api/players/export-csv', requireAuthApi, (req, res) => {
   res.send(csvContent);
 });
 
-// Helper per inviare la lista dei giocatori (Lobby maxischermo & Regia completa)
+// Helper per inviare la lista dei giocatori (Lobby maxischermo: solo connessi; Regia: elenco completo)
 function emitPlayersUpdated() {
   const allPlayers = Object.values(gameState.players);
+  const activePlayers = allPlayers.filter(p => p.connected);
   const allAccounts = Object.values(gameState.accounts || {});
-  io.emit('host:playersUpdated', allPlayers);
+  io.emit('host:playersUpdated', activePlayers);
   io.emit('admin:playersUpdated', allPlayers);
   io.emit('admin:accountsUpdated', allAccounts);
 }
@@ -823,7 +824,7 @@ function isAuthorizedAdminSocket(socket, actionName = 'comando admin') {
 io.on('connection', (socket) => {
   // Sync completo immediato a chiunque si colleghi (Host, Admin, Player ricaricati)
   sendSyncState(socket);
-  socket.emit('host:playersUpdated', Object.values(gameState.players));
+  socket.emit('host:playersUpdated', Object.values(gameState.players).filter(p => p.connected));
   socket.emit('admin:playersUpdated', Object.values(gameState.players));
   socket.emit('admin:accountsUpdated', Object.values(gameState.accounts || {}));
 
